@@ -1,0 +1,4 @@
+-- The remote profiles table was dropped from the dashboard after
+-- 20261023105831_create_profiles ran; the remote copy of this migration
+-- recreated it with the same definition. On a fresh database the earlier
+-- migration already creates everything, so there is nothing to do here.

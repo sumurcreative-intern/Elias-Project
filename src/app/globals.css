@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+/* Design tokens from the Elias Figma style guide */
+@theme {
+  --color-bg-white: #fbfbfb;
+  --color-txt-black: #0c0b10;
+  --color-txt-white: #fbfbfb;
+
+  --color-primary: #fc3c2f;
+  --color-primary-subtle: #f5b2aa;
+  --color-primary-surface: #f4d2cc;
+  --color-primary-border: #f79289;
+
+  --color-disabled-surface: #cdcbc7;
+  --color-disabled-content: #666465;
+
+  --color-ink-50: rgb(12 11 16 / 0.5);
+  --color-ink-40: rgb(12 11 16 / 0.4);
+  --color-ink-30: rgb(12 11 16 / 0.3);
+  --color-ink-20: rgb(12 11 16 / 0.2);
+  --color-ink-10: rgb(12 11 16 / 0.1);
+
+  --color-error: #e7000b;
+  --color-success: #50cd89;
+  --color-success-surface: #f2fff8;
+  --color-green-50: #f0fdf4;
+  --color-stone: #343330;
+
+  --color-neutral-80: #383838;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-gray-500: #7f7d7d;
+  --color-gray-600: #666465;
+
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-inter: var(--font-inter-family), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Archivo type scale (size / line-height) */
+  --text-xs: 12px;
+  --text-xs--line-height: 18px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-md: 16px;
+  --text-md--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 20px;
+  --text-xl--line-height: 30px;
+  --text-display-md: 36px;
+  --text-display-md--line-height: 44px;
+  --text-display-md--letter-spacing: -0.72px;
+  --text-display-3xl: 80px;
+  --text-display-3xl--line-height: 70px;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  /* mobile < 768 (md) ≤ tablet < 1200 (laptop) ≤ laptop */
+  --breakpoint-laptop: 75rem;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-white font-sans text-txt-black antialiased;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  .checkbox:checked {
+    background: var(--color-primary)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 100% no-repeat;
+  }
+}
+
+/* Hide animated elements until GSAP reveals them (skipped for reduced motion) */
+@media (prefers-reduced-motion: no-preference) {
+  [data-animate] {
+    visibility: hidden;
+  }
+}
