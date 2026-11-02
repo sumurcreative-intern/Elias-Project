@@ -18,8 +18,11 @@ const navItems = [
   { label: 'Testimoni', dropdown: false, className: 'font-inter text-neutral-600' },
 ];
 
-/** `signedIn` swaps the Daftar/Masuk links for Keluar. */
-export default function Header({ signedIn }: { signedIn: boolean }) {
+/**
+ * `signedIn` swaps the Daftar/Masuk links for Keluar. `minimal` drops the
+ * navigation and mobile menu, leaving the logo and those actions at every size.
+ */
+export default function Header({ signedIn, minimal = false }: { signedIn: boolean; minimal?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
 
@@ -46,29 +49,31 @@ export default function Header({ signedIn }: { signedIn: boolean }) {
           <Link href="/" aria-label="Elias beranda">
             <Logo priority />
           </Link>
-          <nav aria-label="Navigasi utama" className="hidden items-center gap-5 laptop:flex">
-            {navItems.map((item, i) => (
-              <button
-                key={i}
-                type="button"
-                className={`flex items-center gap-2 rounded-lg text-md font-semibold whitespace-nowrap transition-colors hover:text-txt-black ${item.className}`}
-              >
-                {item.label}
-                {item.dropdown && <CaretDown size={24} className="text-gray-600" />}
-              </button>
-            ))}
-          </nav>
+          {!minimal && (
+            <nav aria-label="Navigasi utama" className="hidden items-center gap-5 laptop:flex">
+              {navItems.map((item, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`flex items-center gap-2 rounded-lg text-md font-semibold whitespace-nowrap transition-colors hover:text-txt-black ${item.className}`}
+                >
+                  {item.label}
+                  {item.dropdown && <CaretDown size={24} className="text-gray-600" />}
+                </button>
+              ))}
+            </nav>
+          )}
         </div>
 
         {signedIn ? (
-          <div className="hidden items-center laptop:flex">
+          <div className={`items-center ${minimal ? 'flex' : 'hidden laptop:flex'}`}>
             <SignOutButton className="flex items-center gap-2 rounded-md text-sm font-medium text-gray-500 transition-colors hover:text-txt-black disabled:opacity-50">
               <SignOut size={20} />
               Keluar
             </SignOutButton>
           </div>
         ) : (
-          <div className="hidden items-center gap-6 laptop:flex">
+          <div className={`items-center gap-6 ${minimal ? 'flex' : 'hidden laptop:flex'}`}>
             <Link href="/signup" className="rounded-md text-sm font-medium text-gray-500 transition-colors hover:text-txt-black">
               Daftar
             </Link>
@@ -81,23 +86,25 @@ export default function Header({ signedIn }: { signedIn: boolean }) {
           </div>
         )}
 
-        <button
-          type="button"
-          aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-menu"
-          onClick={() => setMenuOpen((open) => !open)}
-          className="flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-neutral-100 laptop:hidden"
-        >
-          {menuOpen ? (
-            <X size={24} className="text-neutral-700" />
-          ) : (
-            <Image src="/images/menu.svg" alt="" width={24} height={24} />
-          )}
-        </button>
+        {!minimal && (
+          <button
+            type="button"
+            aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setMenuOpen((open) => !open)}
+            className="flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-neutral-100 laptop:hidden"
+          >
+            {menuOpen ? (
+              <X size={24} className="text-neutral-700" />
+            ) : (
+              <Image src="/images/menu.svg" alt="" width={24} height={24} />
+            )}
+          </button>
+        )}
       </div>
 
-      {menuOpen && (
+      {menuOpen && !minimal && (
         <nav
           id="mobile-menu"
           ref={menuRef}

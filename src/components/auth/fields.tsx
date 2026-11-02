@@ -275,33 +275,39 @@ const passwordRules = [
   { label: 'Mengandung minimal 1 angka (0-9)', test: (value: string) => /[0-9]/.test(value) },
 ];
 
-/** True once the password meets every rule shown by PasswordRules. */
+/** True once the password meets every rule shown by PasswordRequirements. */
 export const meetsPasswordRules = (value: string) => passwordRules.every((rule) => rule.test(value));
 
 /**
  * "Syarat Kata Sandi" checklist from the design's Pass Check component.
- * Each rule shows the design's error state until the password satisfies it.
+ * Each rule flips from the Error atom to the Success atom as the password
+ * satisfies it; once all pass, the component moves from its Default state
+ * (red rule line) to Success (green line).
  */
-export function PasswordRules({ value }: { value: string }) {
+export function PasswordRequirements({ value }: { value: string }) {
+  const results = passwordRules.map((rule) => ({ label: rule.label, met: rule.test(value) }));
+  const success = results.every((rule) => rule.met);
   return (
-    <div data-animate="form-item" className="flex gap-1.5 pl-2">
-      <span aria-hidden className="w-px shrink-0 self-stretch rounded-full bg-primary" />
+    <div data-animate="form-item" data-state={success ? 'success' : 'default'} className="flex gap-1.5 pl-2">
+      <span
+        aria-hidden
+        className={`w-px shrink-0 self-stretch rounded-full transition-colors duration-300 ${success ? 'bg-success' : 'bg-primary'}`}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="font-mono text-[10px] leading-[15px] font-bold text-disabled-content">SYARAT KATA SANDI:</p>
         <ul aria-live="polite">
-          {passwordRules.map((rule) => {
-            const met = rule.test(value);
-            return (
-              <li
-                key={rule.label}
-                className={`flex items-center gap-0.5 text-xs transition-colors ${met ? 'text-success' : 'text-error'}`}
-              >
-                {met ? <CheckCircle size={14} aria-hidden /> : <XCircle size={14} aria-hidden />}
-                {rule.label}
-                <span className="sr-only">{met ? ' (terpenuhi)' : ' (belum terpenuhi)'}</span>
-              </li>
-            );
-          })}
+          {results.map((rule) => (
+            <li
+              key={rule.label}
+              className={`flex items-center gap-0.5 text-xs transition-colors duration-300 ${
+                rule.met ? 'text-success-content' : 'text-error'
+              }`}
+            >
+              {rule.met ? <CheckCircle size={14} aria-hidden /> : <XCircle size={14} aria-hidden />}
+              {rule.label}
+              <span className="sr-only">{rule.met ? ' (terpenuhi)' : ' (belum terpenuhi)'}</span>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

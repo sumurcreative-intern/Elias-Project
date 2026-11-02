@@ -1,13 +1,17 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { nextOnboardingStep, onboardingColumns, type OnboardingProgress } from '@/lib/onboarding';
+import { nextOnboardingStep, onboardingColumns, onboardingSteps, type OnboardingProgress } from '@/lib/onboarding';
 import { REMEMBER_COOKIE, sessionCookieOptions } from '@/lib/supabase/remember';
 
 // Only for signed-out visitors; signed-in users are sent on into the app
 const guestPaths = ['/login', '/signup'];
 // Open to everyone: the recovery flow signs the user in midway, and the
-// confirmation link lands on /auth/callback before any session exists
-const openPrefixes = ['/forgot-password', '/auth/'];
+// confirmation link lands on /auth/callback before any session exists. API
+// routes check the session themselves and answer with JSON, not a redirect
+const openPrefixes = ['/forgot-password', '/auth/', '/api/'];
+// App pages guests can use: a device-scoped Arsip (AR-8). Signed-in users
+// still have to finish onboarding first
+const publicPaths = ['/arsip'];
 
 /**
  * Routes every request by sign-in and onboarding state, and keeps the Supabase
@@ -51,7 +55,11 @@ export async function proxy(request: NextRequest) {
   if (params.has('code')) return redirect(request, response, `/auth/callback?${params}`);
 
   const isGuestPage = guestPaths.includes(path);
-  if (!user) return isGuestPage ? response : redirect(request, response, '/login');
+  if (!user) {
+    // The site opens on sign-up for guests; Beranda is for signed-in users
+    if (path === '/') return redirect(request, response, '/signup');
+    return isGuestPage || publicPaths.includes(path) ? response : redirect(request, response, '/login');
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -61,13 +69,14 @@ export async function proxy(request: NextRequest) {
   const step = nextOnboardingStep(profile);
 
   if (step) {
-    // The profile step stays reachable from goals through its back link
-    const allowed = path === step || (step === '/onboarding/goals' && path === '/onboarding/profile');
+    // Earlier steps stay reachable through the back links
+    const reached = onboardingSteps.indexOf(step);
+    const allowed = onboardingSteps.slice(0, reached + 1).includes(path);
     return allowed ? response : redirect(request, response, step);
   }
 
-  if (isGuestPage || path.startsWith('/onboarding') || path === '/') {
-    return redirect(request, response, '/dashboard');
+  if (isGuestPage || path.startsWith('/onboarding') || path === '/dashboard') {
+    return redirect(request, response, '/');
   }
   return response;
 }

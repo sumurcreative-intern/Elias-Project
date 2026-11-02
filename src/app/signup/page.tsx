@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 export default function SignupPage() {
   return (
     <AuthLayout
+      minimalHeader
       hero={{
         headline: ['PAGI KAMU,', 'KEPALA', 'JENIUS'],
         body: 'Elias membaca tren dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan brand dan peran kamu.',

@@ -24,12 +24,18 @@ const notificationTimes: SelectOption[] = ['05:00', '06:00', '07:00', '08:00', '
   label: `${time} WIB`,
 }));
 
-export default function GoalsForm() {
+export type GoalsAnswers = {
+  goals: string[];
+  notification_time: string | null;
+};
+
+export default function GoalsForm({ initial }: { initial: GoalsAnswers | null }) {
   const router = useRouter();
   const hintId = useId();
   // Kept in selection order: the first pick is the top priority
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [notificationTime, setNotificationTime] = useState('');
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(initial?.goals.filter((goal) => goals.includes(goal)) ?? []);
+  // Postgres returns time as HH:MM:SS
+  const [notificationTime, setNotificationTime] = useState(initial?.notification_time?.slice(0, 5) ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<FormStatus>(null);
 
@@ -57,14 +63,9 @@ export default function GoalsForm() {
       return;
     }
 
-    // Setting onboarding_completed_at makes the database check every required answer
     const { error } = await supabase
       .from('profiles')
-      .update({
-        goals: selectedGoals,
-        notification_time: notificationTime,
-        onboarding_completed_at: new Date().toISOString(),
-      })
+      .update({ goals: selectedGoals, notification_time: notificationTime })
       .eq('id', user.id)
       .select('id')
       .single();
@@ -73,8 +74,8 @@ export default function GoalsForm() {
       setStatus({ tone: 'error', text: errorMessage(error) });
       return;
     }
-    // Stays disabled while the dashboard loads
-    router.push('/dashboard');
+    // Stays disabled while the survey loads
+    router.push('/onboarding/survey');
   }
 
   return (

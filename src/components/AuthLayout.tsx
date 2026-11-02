@@ -9,12 +9,14 @@ type AuthLayoutProps = {
   hero: ComponentProps<typeof HeroPanel>;
   /** Laptop gap under the header: 70px for auth/onboarding, 40px for recovery */
   spacing?: 'default' | 'tight';
+  /** Header with only the logo and Daftar/Masuk (login and sign-up) */
+  minimalHeader?: boolean;
   /** The form column; it owns its own mobile/tablet spacing. */
   children: ReactNode;
 };
 
 /** Shared shell for the auth, onboarding and recovery pages: header, hero + form, footer. */
-export default async function AuthLayout({ hero, spacing = 'default', children }: AuthLayoutProps) {
+export default async function AuthLayout({ hero, spacing = 'default', minimalHeader = false, children }: AuthLayoutProps) {
   // Signed-in users (onboarding, mid-recovery) get Keluar instead of the login/signup links
   const supabase = await createClient();
   const {
@@ -23,7 +25,7 @@ export default async function AuthLayout({ hero, spacing = 'default', children }
 
   return (
     <AuthAnimations className="flex min-h-screen flex-col bg-bg-white">
-      <Header signedIn={user !== null} />
+      <Header signedIn={user !== null} minimal={minimalHeader} />
       <main
         className={`flex w-full justify-center md:px-[98px] laptop:mx-auto laptop:max-w-[1440px] laptop:items-stretch laptop:px-20 laptop:pb-5 ${
           spacing === 'tight' ? 'laptop:pt-10' : 'laptop:pt-[70px]'

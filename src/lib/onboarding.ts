@@ -1,5 +1,6 @@
 /** Columns needed to tell how far a user got through onboarding. */
-export const onboardingColumns = 'name, role, category, target_market, archetype, location, local_focus, onboarding_completed_at';
+export const onboardingColumns =
+  'name, role, category, target_market, archetype, location, local_focus, goals, notification_time, onboarding_completed_at';
 
 export type OnboardingProgress = {
   name: string | null;
@@ -9,6 +10,8 @@ export type OnboardingProgress = {
   archetype: string | null;
   location: string | null;
   local_focus: boolean;
+  goals: string[];
+  notification_time: string | null;
   onboarding_completed_at: string | null;
 };
 
@@ -22,5 +25,10 @@ export function nextOnboardingStep(profile: OnboardingProgress | null): string |
     profile.target_market &&
     profile.archetype &&
     (profile.location || profile.local_focus);
-  return profileDone ? '/onboarding/goals' : '/onboarding/profile';
+  if (!profileDone) return '/onboarding/profile';
+  const goalsDone = profile.goals.length > 0 && profile.notification_time;
+  return goalsDone ? '/onboarding/survey' : '/onboarding/goals';
 }
+
+/** Onboarding pages in order; earlier ones stay reachable through their back links. */
+export const onboardingSteps = ['/onboarding/profile', '/onboarding/goals', '/onboarding/survey'];

@@ -12,6 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <AuthLayout
+      minimalHeader
       hero={{
         headline: ['IDE NGGAK', 'NUNGGU', 'MOOD.'],
         body: 'Elias membaca Trends dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan brand dan peran kamu.',

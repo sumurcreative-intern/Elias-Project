@@ -12,7 +12,7 @@ import {
   FormMessage,
   meetsPasswordRules,
   PasswordField,
-  PasswordRules,
+  PasswordRequirements,
   RememberRow,
   SocialOptions,
   SubmitButton,
@@ -101,7 +101,7 @@ export default function SignupForm() {
               autoComplete="new-password"
               size="md"
             />
-            <PasswordRules value={password} />
+            <PasswordRequirements value={password} />
           </div>
           <DropdownField
             icon={Users}

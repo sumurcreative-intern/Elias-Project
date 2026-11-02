@@ -1,6 +1,6 @@
 import type { SelectOption } from '@/components/auth/fields';
 
-// The audience a brand wants to reach; tunes what the dashboard shows.
+// The audience a brand wants to reach; tunes what Beranda shows.
 // Keep in sync with profiles_target_market_check
 export const targetMarkets: SelectOption[] = [
   { value: 'gen_z', label: 'Gen Z', description: 'Usia 14–29, aktif di TikTok dan Instagram.' },

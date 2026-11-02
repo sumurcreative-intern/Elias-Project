@@ -10,7 +10,7 @@ import {
   EmailField,
   FormMessage,
   PasswordField,
-  PasswordRules,
+  PasswordRequirements,
   RememberRow,
   SocialOptions,
   SubmitButton,
@@ -41,7 +41,7 @@ export default function LoginForm({ initialStatus }: { initialStatus: FormStatus
       return;
     }
     // The proxy sends users with unfinished onboarding to the step they stopped at
-    router.push('/dashboard');
+    router.push('/');
   }
 
   return (
@@ -65,7 +65,7 @@ export default function LoginForm({ initialStatus }: { initialStatus: FormStatus
               hint="Masukkan kata sandi kamu."
               autoComplete="current-password"
             />
-            <PasswordRules value={password} />
+            <PasswordRequirements value={password} />
           </div>
           <RememberRow checked={remember} onChange={setRemember} />
         </div>

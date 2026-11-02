@@ -1,14 +1,24 @@
 import type { Metadata } from 'next';
 import AuthLayout from '@/components/AuthLayout';
-import GoalsForm from '@/components/onboarding/GoalsForm';
+import GoalsForm, { type GoalsAnswers } from '@/components/onboarding/GoalsForm';
 import { onboardingFlow } from '@/components/progress/flows';
 import StepList from '@/components/progress/StepList';
+import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
   title: 'Tujuan & Preferensi — Elias',
 };
 
-export default function OnboardingGoalsPage() {
+export default async function OnboardingGoalsPage() {
+  // Filled again when the user comes back from the survey
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: initial } = user
+    ? await supabase.from('profiles').select('goals, notification_time').eq('id', user.id).maybeSingle<GoalsAnswers>()
+    : { data: null };
+
   return (
     <AuthLayout
       hero={{
@@ -18,7 +28,7 @@ export default function OnboardingGoalsPage() {
         children: <StepList flow={onboardingFlow} current={2} />,
       }}
     >
-      <GoalsForm />
+      <GoalsForm initial={initial} />
     </AuthLayout>
   );
 }

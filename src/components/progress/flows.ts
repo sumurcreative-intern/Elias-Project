@@ -1,5 +1,6 @@
 import type { Icon } from '@phosphor-icons/react';
 import {
+  ChatCircleText,
   EnvelopeSimpleOpen,
   Password,
   ShieldCheck,
@@ -28,6 +29,7 @@ export const onboardingFlow: Flow = {
     { short: 'Membuat Akun', title: 'Buat akun Elias', icon: User },
     { short: 'Profil Personal', title: 'Lengkapi Profil', icon: UserCircleCheck },
     { short: 'Tujuan & Preferensi', title: 'Tujuan & Preferensi', icon: Target },
+    { short: 'Survei Singkat', title: 'Survei Singkat', icon: ChatCircleText },
   ],
 };
 

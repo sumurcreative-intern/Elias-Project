@@ -10,6 +10,8 @@
   --color-primary-subtle: #f5b2aa;
   --color-primary-surface: #f4d2cc;
   --color-primary-border: #f79289;
+  /* Deep Ember: hover for primary actions and secondary accents */
+  --color-ember: #c41e28;
 
   --color-disabled-surface: #cdcbc7;
   --color-disabled-content: #666465;
@@ -22,9 +24,18 @@
 
   --color-error: #e7000b;
   --color-success: #50cd89;
+  --color-success-content: #00a63e;
   --color-success-surface: #f2fff8;
   --color-green-50: #f0fdf4;
   --color-stone: #343330;
+  /* Text on Studio Ink (txt-black) surfaces, e.g. the Elias analysis card */
+  --color-paper: #f2efea;
+
+  /* Insight verdicts and Arsip statuses: always paired with an icon so they
+     stay distinguishable without colour (AR-2) */
+  --color-success-strong: #1f7a45;
+  --color-warning: #b45309;
+  --color-warning-surface: #fdf3e1;
 
   --color-neutral-80: #383838;
   --color-neutral-100: #f5f5f5;
@@ -51,6 +62,11 @@
   --text-lg--line-height: 28px;
   --text-xl: 20px;
   --text-xl--line-height: 30px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 32px;
+  --text-display-sm: 30px;
+  --text-display-sm--line-height: 38px;
+  --text-display-sm--letter-spacing: -0.6px;
   --text-display-md: 36px;
   --text-display-md--line-height: 44px;
   --text-display-md--letter-spacing: -0.72px;
