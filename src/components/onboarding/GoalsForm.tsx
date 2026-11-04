@@ -3,6 +3,7 @@
 import { useId, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarStar, Star } from '@phosphor-icons/react';
+import { alwaysOnOptions, DEFAULT_ALWAYS_ON, isAlwaysOn, type AlwaysOn } from '@/lib/alwaysOn';
 import { createClient } from '@/lib/supabase/client';
 import { errorMessage } from '@/lib/supabase/errors';
 import { DropdownField, type FormStatus, type SelectOption } from '../auth/fields';
@@ -27,6 +28,7 @@ const notificationTimes: SelectOption[] = ['05:00', '06:00', '07:00', '08:00', '
 export type GoalsAnswers = {
   goals: string[];
   notification_time: string | null;
+  always_on: string | null;
 };
 
 export default function GoalsForm({ initial }: { initial: GoalsAnswers | null }) {
@@ -36,6 +38,8 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
   const [selectedGoals, setSelectedGoals] = useState<string[]>(initial?.goals.filter((goal) => goals.includes(goal)) ?? []);
   // Postgres returns time as HH:MM:SS
   const [notificationTime, setNotificationTime] = useState(initial?.notification_time?.slice(0, 5) ?? '');
+  const savedAlwaysOn = initial?.always_on;
+  const [alwaysOn, setAlwaysOn] = useState<AlwaysOn>(isAlwaysOn(savedAlwaysOn) ? savedAlwaysOn : DEFAULT_ALWAYS_ON);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<FormStatus>(null);
 
@@ -45,6 +49,11 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
     setSelectedGoals((current) =>
       current.includes(goal) ? current.filter((g) => g !== goal) : [...current, goal],
     );
+  }
+
+  /** Exactly one primary (PR-2): goals[0], so promoting a goal moves it to the front. */
+  function makePrimary(goal: string) {
+    setSelectedGoals((current) => [goal, ...current.filter((g) => g !== goal)]);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -65,7 +74,7 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
 
     const { error } = await supabase
       .from('profiles')
-      .update({ goals: selectedGoals, notification_time: notificationTime })
+      .update({ goals: selectedGoals, notification_time: notificationTime, always_on: alwaysOn })
       .eq('id', user.id)
       .select('id')
       .single();
@@ -131,12 +140,26 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
                 <span className={`block text-sm md:text-md ${checked ? 'text-txt-black' : 'text-disabled-content'}`}>
                   {goal}
                 </span>
+                {checked && !top && (
+                  <button
+                    type="button"
+                    // Keeps the click from reaching the label, which would uncheck the goal
+                    onClick={(event) => {
+                      event.preventDefault();
+                      makePrimary(goal);
+                    }}
+                    className="mt-1 flex items-center gap-1 text-xs font-medium text-disabled-content transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none"
+                  >
+                    <Star size={12} aria-hidden />
+                    Jadikan prioritas utama
+                  </button>
+                )}
               </label>
             );
           })}
         </div>
         <p id={hintId} data-animate="form-item" className="text-xs text-disabled-content">
-          Pilihan pertama otomatis menjadi prioritas utama, ditandai bintang.
+          Pilih satu atau lebih. Hanya satu yang menjadi prioritas utama, ditandai bintang.
         </p>
       </fieldset>
 
@@ -152,6 +175,40 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
         selectedHint={(time) => `Email dari Elias tiba setiap pagi pukul ${time.label}.`}
         sheetTitle="Pilih Waktu Notifikasi"
       />
+
+      <fieldset className="flex flex-col gap-1">
+        <legend data-animate="form-item" className="mb-1 text-xs font-medium text-disabled-content">
+          Always On
+        </legend>
+        {/* Same tiles as the survey step: one answer, preselected to the PR-5 default */}
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+          {alwaysOnOptions.map((option) => {
+            const checked = alwaysOn === option.value;
+            return (
+              <label
+                key={option.value}
+                data-animate="form-item"
+                className={`relative block cursor-pointer rounded-xl border py-3.5 pr-11 pl-4 transition-colors has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-primary ${
+                  checked ? 'border-primary bg-primary-surface/40' : 'border-disabled-surface hover:border-disabled-content'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="alwaysOn"
+                  value={option.value}
+                  checked={checked}
+                  onChange={() => setAlwaysOn(option.value)}
+                  className="absolute top-4 right-4 size-4 cursor-pointer appearance-none rounded-full border border-disabled-content bg-white outline-none checked:border-primary checked:bg-primary checked:shadow-[inset_0_0_0_3px_white]"
+                />
+                <span className={`block text-sm md:text-md ${checked ? 'text-txt-black' : 'text-disabled-content'}`}>
+                  {option.label}
+                </span>
+                <span className="block text-xs text-disabled-content">{option.description}</span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
     </OnboardingForm>
   );
 }

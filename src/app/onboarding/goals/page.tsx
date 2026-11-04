@@ -16,7 +16,7 @@ export default async function OnboardingGoalsPage() {
     data: { user },
   } = await supabase.auth.getUser();
   const { data: initial } = user
-    ? await supabase.from('profiles').select('goals, notification_time').eq('id', user.id).maybeSingle<GoalsAnswers>()
+    ? await supabase.from('profiles').select('goals, notification_time, always_on').eq('id', user.id).maybeSingle<GoalsAnswers>()
     : { data: null };
 
   return (

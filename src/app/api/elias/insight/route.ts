@@ -113,12 +113,12 @@ export async function POST(request: Request) {
   }
 
   const key = insightCacheKey(insightRequest);
-  const cached = getCachedInsight(key);
+  const cached = await getCachedInsight(key);
   if (cached) return success(insightRequest, cached, true);
 
   type Outcome = { generated: GenerateResult; news: NewsContext; youtube: YouTubeTrends };
   const result = await dedupe<Outcome | { overBudget: number }>(key, async () => {
-    const budget = takeUserBudget(user.id);
+    const budget = await takeUserBudget(user.id);
     if (!budget.allowed) return { overBudget: budget.retryAfter };
     // Neither source can fail the call: problems come back as a status the
     // prompt and the card both handle
@@ -128,9 +128,9 @@ export async function POST(request: Request) {
       fetchYouTubeTrends('ID', 3),
     ]);
     const generated = await generateInsight(insightRequest, news, youtube);
-    if (generated.ok) setCachedInsight(key, generated.insight, generated.model, news, youtube);
+    if (generated.ok) await setCachedInsight(key, generated.insight, generated.model, news, youtube);
     // Rejected before reaching a model: don't count it against the user
-    else if (generated.status === 429 || generated.status === 503) refundUserBudget(user.id);
+    else if (generated.status === 429 || generated.status === 503) await refundUserBudget(user.id, budget);
     return { generated, news, youtube };
   });
 

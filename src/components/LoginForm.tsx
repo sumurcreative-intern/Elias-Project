@@ -42,6 +42,8 @@ export default function LoginForm({ initialStatus }: { initialStatus: FormStatus
     }
     // The proxy sends users with unfinished onboarding to the step they stopped at
     router.push('/');
+    // Drop any cached pages rendered while signed out, which still show Daftar/Masuk
+    router.refresh();
   }
 
   return (

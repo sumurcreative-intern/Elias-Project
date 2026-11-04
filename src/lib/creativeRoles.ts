@@ -19,24 +19,9 @@ export const creativeRoleLabels: Record<CreativeRole, string> = {
   content_creator: 'Content Creator',
 };
 
-// TODO: onboarding still asks for job titles, not the PRD's seven roles.
-// Until the Profile page asks for the creative role directly, map each title
-// to the role whose "so what" fits it best.
-const fromOnboardingRole: Record<string, CreativeRole> = {
-  founder: 'strategist',
-  brand_manager: 'strategist',
-  marketing_manager: 'content_planner',
-  brand_strategist: 'strategist',
-  creative_director: 'creative_director',
-  social_media_specialist: 'content_planner',
-  content_creator: 'content_creator',
-  copywriter: 'content_writer',
-  public_relations: 'content_writer',
-  agency_account_manager: 'creative_director',
-};
-
-export function creativeRoleFor(onboardingRole: string | null | undefined): CreativeRole {
-  return (onboardingRole && fromOnboardingRole[onboardingRole]) || 'strategist';
+/** The role saved in the profile; strategist when it is missing. */
+export function creativeRoleFor(profileRole: string | null | undefined): CreativeRole {
+  return isCreativeRole(profileRole) ? profileRole : 'strategist';
 }
 
 /** The "so what" each role needs from the same signal (PRD Ch. 3). Drives the AI prompt. */

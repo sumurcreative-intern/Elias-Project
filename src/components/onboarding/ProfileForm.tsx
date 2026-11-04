@@ -14,6 +14,8 @@ import {
   SquaresFour,
   Target,
 } from '@phosphor-icons/react';
+import { archetypeDirections } from '@/lib/archetypes';
+import { creativeRoleLabels } from '@/lib/creativeRoles';
 import { LocateError, locateUser } from '@/lib/locateUser';
 import { createClient } from '@/lib/supabase/client';
 import { errorMessage } from '@/lib/supabase/errors';
@@ -40,36 +42,15 @@ const categories: SelectOption[] = [
   { value: 'parenting', label: 'Parenting & Kids' },
 ];
 
-// Roles of the people who run a brand's content with Elias
-const roles: SelectOption[] = [
-  { value: 'founder', label: 'Founder / Pemilik Brand' },
-  { value: 'brand_manager', label: 'Brand Manager' },
-  { value: 'marketing_manager', label: 'Marketing Manager' },
-  { value: 'brand_strategist', label: 'Brand Strategist' },
-  { value: 'creative_director', label: 'Creative Director' },
-  { value: 'social_media_specialist', label: 'Social Media Specialist' },
-  { value: 'content_creator', label: 'Content Creator' },
-  { value: 'copywriter', label: 'Copywriter' },
-  { value: 'public_relations', label: 'Public Relations' },
-  { value: 'agency_account_manager', label: 'Account Manager Agency' },
-];
+// The PRD's seven creative roles: Elias tailors every recommendation to the one picked
+const roles: SelectOption[] = Object.entries(creativeRoleLabels).map(([value, label]) => ({ value, label }));
 
-// TODO: confirm the archetype list with the content team
-// Descriptions replace the hint once chosen; kept short so they fit one line on mobile
-const archetypes: SelectOption[] = [
-  ['Innocent', 'Optimis dan tulus, menawarkan rasa aman dan sederhana.'],
-  ['Explorer', 'Petualang yang mencari kebebasan dan pengalaman baru.'],
-  ['Sage', 'Bijak dan berwawasan, berbagi pengetahuan dan kebenaran.'],
-  ['Hero', 'Berani dan tangguh, menginspirasi lewat pencapaian.'],
-  ['Outlaw', 'Pemberontak yang mendobrak aturan dan memicu perubahan.'],
-  ['Magician', 'Visioner yang mewujudkan mimpi menjadi kenyataan.'],
-  ['Everyman', 'Membumi dan relatable, membangun rasa kebersamaan.'],
-  ['Lover', 'Hangat dan memikat, merayakan keintiman dan keindahan.'],
-  ['Jester', 'Jenaka dan spontan, membawa keceriaan di setiap momen.'],
-  ['Caregiver', 'Penuh kasih, melindungi dan merawat orang lain.'],
-  ['Creator', 'Imajinatif dan inovatif, menciptakan hal yang bernilai.'],
-  ['Ruler', 'Berwibawa dan teratur, memimpin dengan kendali penuh.'],
-].map(([name, description]) => ({ value: name.toLowerCase(), label: `The ${name}`, description }));
+// All twelve, each with its description inline in the picker (PR-4)
+const archetypes: SelectOption[] = Object.entries(archetypeDirections).map(([value, { name, description }]) => ({
+  value,
+  label: `The ${name}`,
+  description,
+}));
 
 /** Answers saved earlier, so returning users don't start from blank fields. */
 export type ProfileAnswers = {
@@ -85,7 +66,7 @@ export type ProfileAnswers = {
 export default function ProfileForm({ initial }: { initial: ProfileAnswers | null }) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? '');
-  // Roles typed in before this became a dropdown aren't in the list, so start blank
+  // Roles saved outside the list (old job titles, free text) start blank
   const [role, setRole] = useState(roles.find((r) => r.value === initial?.role)?.value ?? '');
   const [category, setCategory] = useState(initial?.category ?? '');
   const [targetMarket, setTargetMarket] = useState(initial?.target_market ?? '');

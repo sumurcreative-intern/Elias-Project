@@ -10,14 +10,17 @@ export type ProfileRow = {
   local_focus: boolean;
   goals: string[];
   notification_time: string | null;
+  always_on: string;
 };
 
 export async function fetchProfile(supabase: SupabaseClient, userId: string): Promise<ProfileRow | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
-    .select('role, category, archetype, target_market, location, local_focus, goals, notification_time')
+    .select('role, category, archetype, target_market, location, local_focus, goals, notification_time, always_on')
     .eq('id', userId)
     .maybeSingle<ProfileRow>();
+  // A failed read renders the guest feed, so say why (e.g. a column whose migration isn't applied)
+  if (error) console.error('Profile could not be read', error);
   return data;
 }
 

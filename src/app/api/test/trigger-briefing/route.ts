@@ -84,14 +84,14 @@ export async function POST(request: Request) {
   };
 
   // Same per-user cap as the Beranda card: a test run is a real OpenRouter request
-  const budget = takeUserBudget(user.id);
+  const budget = await takeUserBudget(user.id);
   if (!budget.allowed) return fail(429, 'Jatah analisis kamu untuk hari ini sudah habis.');
 
   // Neither source can fail the run: problems come back as a status the prompt handles
   const [news, youtube] = await Promise.all([fetchGdeltNewsContext(input.targetTopic), fetchYouTubeTrends('ID', 3)]);
   const generated = await generateInsight(insightRequest, news, youtube);
   if (!generated.ok) {
-    if (generated.status === 429 || generated.status === 503) refundUserBudget(user.id);
+    if (generated.status === 429 || generated.status === 503) await refundUserBudget(user.id, budget);
     return fail(500, `OpenRouter: ${generated.error.message}`);
   }
 

@@ -64,17 +64,24 @@ only after design-lead and supervisor sign-off.
 ## MVP 5 — Ingestion and synthesis · Phase 1
 
 - [ ] Source adapters: YouTube Data API, GDELT, Google Trends behind a swappable adapter (DS-1)
-  - [x] YouTube: general chart + Howto & Style, Entertainment, News, Science & Tech, Sports charts for Indonesia (~6 units/hour, cached)
+  - [x] YouTube: all 12 charts Indonesia serves (general + 11 categories), 50 places each, with likes, comments, duration, upload date and tags (12 units/cycle, cached)
+  - [x] YouTube searches per brand category (`src/lib/insights/youtubeSearch.ts`): 11 curated Indonesian queries, last 48h by views, non-Indonesian results dropped; 1,111 units/day, once per WIB day (reused from the snapshot on retries). Sports, Arts, Parenting off until better queries are found
+  - [x] Topic groups counted in code (`src/lib/insights/topics.ts`) across every collected video: terms and title phrases shared by 3+ videos from 2+ channels, sent as a `<topics>` block citing member videos
+  - The prompt gets the top 8 of each chart, top 4 of each search, each topic's members, then movers: max 150 videos
   - [x] GDELT: one `sourcecountry:indonesia` headline batch per cycle, through the same spacing/backoff (not yet seen returning articles: rate-limited or unreachable from the dev IP)
-  - [ ] Google Trends (no official API)
+  - [x] Google Trends (`src/lib/googleTrends.ts`): the public "Trending now" RSS for Indonesia (10 newest searches, ~2 hours, traffic level + 3 news links each); `google-trends-api` is unusable (its daily endpoint answers 404)
+    - Captured at most once an hour on any Beranda visit and by the cycle, merged into `google_trends_snapshots` per term per WIB day (`src/lib/insights/searchTrends.ts`); kept 30 days by pg_cron `purge-old-google-trends`
+    - The prompt gets up to 20 searches seen in the last 24h as `<search_trends>` (`G1`…), with traffic level, start time, "N hari berturut-turut" streak and news titles; evidence links to the term's Trends explore page
+    - [ ] Capture hourly from a cron instead of visits (with the warm-up cron), so quiet hours aren't missed
 - [x] Generation cycle (`src/lib/insights/live.ts`): first request of the WIB day builds it, fixed until the next day; Beranda no longer reads `mock.ts`
   - Two stages on OpenRouter: one call picks up to 6 trends citing input ids, then 7 parallel per-role calls write recommendations (8 requests/day)
-  - Cards carry no metric: a single snapshot can't support growth figures. Each card links its evidence (videos/articles) instead
+  - Cards carry only measured movement (views gained, rank change, new on chart vs. the previous stored day), never percentages or life-cycle claims. Each card links its evidence (videos/articles)
   - Failure shows "Feed hari ini belum tersedia" (never sample cards) and retries after 10 minutes
   - [x] Store each cycle in `insight_cycles` / `insights` (written with `SUPABASE_SECRET_KEY`; without it today's cycle stays in memory only)
   - [x] Keep 5 days: read policy hides older cycles, pg_cron job `purge-old-insights` deletes them at 00:05 WIB
   - [ ] Warm the cycle from the cron instead of the first visit (~2.5 min wait)
-  - [ ] Daily snapshots, so later cycles can state measured change
+  - [x] Daily snapshots (`youtube_chart_snapshots`, `src/lib/insights/snapshots.ts`): every chart place saved once per WIB day, compared with the newest earlier day (up to 7 days back); kept 30 days by pg_cron `purge-old-youtube-snapshots`
+  - [ ] Not yet seen live: a cycle comparing against a stored day (migration applied 2026-11-04; needs two days of cycles)
 - [x] Explicit no-signal branch feeding the quiet-day state (V6): an empty trend list from the model is a quiet day
 
 ## MVP 5a — Live role-tailored analysis (OpenRouter free tier)

@@ -90,6 +90,8 @@ export function briefingEmailHtml({ label, trendTopic, role, insight, news, yout
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
+<!-- Web fonts load in Apple Mail, iOS Mail and Thunderbird; Gmail and Outlook drop them and use the fallbacks in each font stack -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <title>${esc(insight.headline)}</title>
 </head>
 <body style="margin:0;padding:0;background:${ink}">
