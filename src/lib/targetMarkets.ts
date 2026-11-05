@@ -18,6 +18,15 @@ export const targetMarkets: SelectOption[] = [
   { value: 'general', label: 'Umum / Semua Kalangan', description: 'Konten yang relevan untuk audiens luas.' },
 ];
 
+// The daily cycle tags every card with the audiences its trend reaches
+// (Insight.audiences), so Beranda can order a brand's cards by its target.
+// "general" is everyone, so it is never a tag and never reorders the feed
+export const audienceMarkets = targetMarkets.map((market) => market.value).filter((value) => value !== 'general');
+
+export function isAudienceMarket(value: unknown): value is string {
+  return typeof value === 'string' && audienceMarkets.includes(value);
+}
+
 export function targetMarketLabel(value: string | null | undefined): string | null {
   return targetMarkets.find((market) => market.value === value)?.label ?? null;
 }

@@ -1,3 +1,4 @@
+import type { BrandCategory } from '../brandCategories';
 import type { CreativeRole } from '../creativeRoles';
 
 /**
@@ -33,6 +34,13 @@ export type Insight = {
   id: string;
   source: SourceId;
   category: string;
+  /**
+   * Brand categories with a real angle in this trend, possibly none. Absent
+   * on cards stored before the cycle tagged them: fall back to `category`
+   */
+  brandCategories?: BrandCategory[];
+  /** Target markets (profiles.target_market ids) the trend reaches; absent on untagged cards */
+  audiences?: string[];
   tags: string[];
   /** When the source observed the movement (ISO date) */
   observedOn: string;

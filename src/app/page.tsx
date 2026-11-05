@@ -4,25 +4,29 @@ import AppShell from '@/components/app/AppShell';
 import CycleLoading from '@/components/beranda/CycleLoading';
 import CycleUnavailable from '@/components/beranda/CycleUnavailable';
 import FeedPages from '@/components/beranda/FeedPages';
+import FeedScope from '@/components/beranda/FeedScope';
 import InsightCard, { type Flavour } from '@/components/beranda/InsightCard';
 import ProfilePrompt from '@/components/beranda/ProfilePrompt';
 import QuietDay from '@/components/beranda/QuietDay';
 import { archetypeDirections } from '@/lib/archetypes';
+import { brandCategoryLabels, isBrandCategory } from '@/lib/brandCategories';
 import { creativeRoleFor, creativeRoleLabels } from '@/lib/creativeRoles';
 import { daysBefore, formatDate } from '@/lib/dates';
 import { brandContextFor, fetchProfile } from '@/lib/elias/brandProfile';
+import { fitsBrand, rankForAudience } from '@/lib/insights/brandFit';
 import { feedPage, groupByDay } from '@/lib/insights/feed';
 import { getRecentFeed } from '@/lib/insights/live';
+import type { StoredCard } from '@/lib/insights/store';
 import { sources, type Insight } from '@/lib/insights/types';
 import { createClient } from '@/lib/supabase/server';
-import { targetMarketLabel } from '@/lib/targetMarkets';
+import { isAudienceMarket, targetMarketLabel } from '@/lib/targetMarkets';
 
 export const metadata: Metadata = {
   title: 'Beranda — Elias',
 };
 
 /** Opens with the count, never a greeting (V2): "18 sinyal dalam 5 hari terakhir, 4 hari ini. 7 layak dieksekusi, …" */
-function headline(insights: Insight[], today: number): string {
+function headline(insights: Insight[], today: number, brandLabel?: string): string {
   const count = (verdict: Insight['verdict']) => insights.filter((insight) => insight.verdict === verdict).length;
   const parts = [
     [count('act'), 'layak dieksekusi'],
@@ -32,7 +36,8 @@ function headline(insights: Insight[], today: number): string {
     .filter(([n]) => n)
     .map(([n, label]) => `${n} ${label}`);
   const todayPart = today ? `, ${today} hari ini` : '';
-  return `${insights.length} sinyal dalam 5 hari terakhir${todayPart}. ${parts.join(', ')}.`;
+  const scope = brandLabel ? ` untuk brand ${brandLabel}` : '';
+  return `${insights.length} sinyal${scope} dalam 5 hari terakhir${todayPart}. ${parts.join(', ')}.`;
 }
 
 /** "Hari ini", "Kemarin", or the weekday and date for the older days of the window. */
@@ -43,7 +48,7 @@ function dayLabel(date: string, today: string): string {
   return full;
 }
 
-type SearchParams = Promise<{ siklus?: string; halaman?: string }>;
+type SearchParams = Promise<{ siklus?: string; halaman?: string; tampil?: string }>;
 
 /**
  * The first visit of the WIB day waits for the cycle to be generated, so the
@@ -60,7 +65,7 @@ export default function BerandaPage({ searchParams }: { searchParams: SearchPara
 }
 
 async function Beranda({ searchParams }: { searchParams: SearchParams }) {
-  const { siklus, halaman } = await searchParams;
+  const { siklus, halaman, tampil } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -77,20 +82,41 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
   // Switch for reviewing the no-signal branch (V6)
   const feed = await getRecentFeed(supabase, { time, quiet: siklus === 'sepi' });
   // Guests get Tier-1 sources only (BR-4)
-  const cards = flavour ? feed.cards : feed.cards.filter((card) => sources[card.insight.source].tier === 1);
+  const allCards = flavour ? feed.cards : feed.cards.filter((card) => sources[card.insight.source].tier === 1);
+
+  // Signed-in users open on the cards for their brand; guests and profiles
+  // without a category keep the whole feed. Nothing fitting falls back to all
+  const category = profile?.category;
+  const brand = flavour && isBrandCategory(category) ? { id: category, label: brandCategoryLabels[category] } : null;
+  const brandCards = brand ? allCards.filter((card) => fitsBrand(card.insight, brand.id)) : [];
+  const wantsAll = tampil === 'semua';
+  const scoped = Boolean(brand) && !wantsAll && brandCards.length > 0;
+  // Then those reaching the brand's target market first, within each day and verdict
+  const targetMarket = profile?.target_market;
+  const viewCards = scoped ? brandCards : allCards;
+  const cards = flavour && isAudienceMarket(targetMarket) ? rankForAudience(viewCards, targetMarket) : viewCards;
+
   const insights = cards.map((card) => card.insight);
-  const todayCount = cards.filter((card) => card.cycleDate === feed.date).length;
+  const isToday = (card: StoredCard) => card.cycleDate === feed.date;
+  const todayCount = cards.filter(isToday).length;
   const nextCycle = `besok pukul ${feed.time} WIB`;
   const shown = feedPage(cards, halaman);
-  // Keeps the prototype's quiet-day switch while paging
-  const query = siklus ? new URLSearchParams({ siklus }).toString() : '';
-  // Today has nothing to add, but the days before still do
-  const todayNote =
-    insights.length && !todayCount
-      ? feed.status === 'unavailable'
-        ? 'Siklus hari ini belum tersedia, Elias mencoba lagi dalam beberapa menit. Kartu di bawah dari hari-hari sebelumnya.'
-        : 'Hari ini tidak ada pergerakan baru yang layak ditindaklanjuti. Kartu di bawah dari hari-hari sebelumnya.'
-      : null;
+  // Keeps the prototype's quiet-day switch, without the page, across views
+  const viewQuery = siklus ? new URLSearchParams({ siklus }).toString() : '';
+  // ...and the view itself while paging
+  const query = new URLSearchParams({ ...(siklus && { siklus }), ...(wantsAll && { tampil }) }).toString();
+  const todayNote = !insights.length
+    ? null
+    : brand && !wantsAll && !brandCards.length
+      ? `Belum ada tren yang cocok untuk brand ${brand.label} dalam 5 hari terakhir, jadi semua tren ditampilkan.`
+      : todayCount
+        ? null
+        : scoped && allCards.some(isToday)
+          ? `Hari ini belum ada tren yang cocok untuk brand ${brand?.label}. Kartu di bawah dari hari-hari sebelumnya; tren lain hari ini ada di Semua.`
+          : // Today has nothing to add, but the days before still do
+            feed.status === 'unavailable'
+            ? 'Siklus hari ini belum tersedia, Elias mencoba lagi dalam beberapa menit. Kartu di bawah dari hari-hari sebelumnya.'
+            : 'Hari ini tidak ada pergerakan baru yang layak ditindaklanjuti. Kartu di bawah dari hari-hari sebelumnya.';
 
   const market = targetMarketLabel(profile?.target_market);
   const context = flavour && [
@@ -108,7 +134,7 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
           </p>
           <h1 className="max-w-4xl text-2xl font-bold md:text-display-sm laptop:text-display-md">
             {insights.length
-              ? headline(insights, todayCount)
+              ? headline(insights, todayCount, scoped ? brand?.label : undefined)
               : feed.status === 'unavailable'
                 ? 'Feed hari ini belum tersedia.'
                 : 'Hari ini sepi.'}
@@ -128,6 +154,16 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
         </section>
 
         {!flavour && <ProfilePrompt />}
+
+        {brand && allCards.length > 0 && (
+          <FeedScope
+            brandLabel={brand.label}
+            brandCount={brandCards.length}
+            allCount={allCards.length}
+            active={scoped ? 'brand' : 'all'}
+            query={viewQuery}
+          />
+        )}
 
         {todayNote && (
           <p data-animate="page-item" className="rounded-2xl border border-dashed border-disabled-surface p-4 text-md text-neutral-600 md:p-6">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ArrowSquareOut, BookmarkSimple, CaretDown, Check, CircleNotch, Copy, Lightning, WarningCircle } from '@phosphor-icons/react';
 import { archetypeDirections } from '@/lib/archetypes';
 import { useArchive } from '@/lib/archive';
@@ -225,6 +226,12 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
             <button type="button" onClick={analyse} className={secondaryButton}>
               Coba lagi
             </button>
+          )}
+          {/* The page was rendered signed in, but the session ended since */}
+          {state.error.code === 'unauthorized' && (
+            <Link href="/login" className={secondaryButton}>
+              Masuk lagi
+            </Link>
           )}
         </div>
       )}

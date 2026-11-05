@@ -1,8 +1,10 @@
+import { brandCategories, brandCategoryLabels, isBrandCategory } from '../brandCategories';
 import { creativeRoleFocus, creativeRoleLabels, type CreativeRole } from '../creativeRoles';
 import { formatDate, todayInJakarta } from '../dates';
 import { modelsFrom, requestCompletion } from '../elias/openrouter';
 import { cleanCopy, extractJson, isRecord, nonEmpty, parseVerdict } from '../elias/parse';
 import { fetchIndonesiaHeadlines, type NewsContext } from '../gdelt';
+import { audienceMarkets, isAudienceMarket, targetMarketLabel } from '../targetMarkets';
 import { doNotTranslate } from '../glossary';
 import { fetchYouTubeTrends, type YouTubeVideo } from '../youtube';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -284,6 +286,8 @@ FIELDS PER TREND
 - "verdict": "act" | "watch" | "skip".
 - "whyItMatters": 1-2 sentences about brands in general, the same for every reader. Do not address the reader.
 - "category": one of ${categories.map((c) => `"${c}"`).join(', ')}.
+- "brandCategories": the brand industries that could credibly make something from this trend today, from ${brandCategories.map((id) => `"${id}" (${brandCategoryLabels[id]})`).join(', ')}. Judge the brand's angle, not the subject: a Lebaran outfit trend fits "fashion", "beauty" and "food_beverage"; a football match fits "sports" and whichever industries can join the moment. List every industry with a real angle and no others. A moment nearly every brand can join may list most of them; content for children, and sensitive news no brand should touch, list none ([]).
+- "audiences": who the cited items show this trend reaches, from ${audienceMarkets.map((id) => `"${id}" (${targetMarketLabel(id)})`).join(', ')}. Judge from the content, channels and search terms, not from who could be targeted: a campus-life vlog trend reaches "students" and "gen_z". List each audience the evidence supports; when it shows no particular audience, list none ([]).
 - "tags": 2-4 short lowercase tags; the first is a 1-3 word keyword usable as a news search term.
 - "evidence": the cited ids.
 
@@ -348,12 +352,14 @@ const trendsSchema = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['signal', 'verdict', 'whyItMatters', 'category', 'tags', 'evidence'],
+        required: ['signal', 'verdict', 'whyItMatters', 'category', 'brandCategories', 'audiences', 'tags', 'evidence'],
         properties: {
           signal: { type: 'string' },
           verdict: { type: 'string', enum: ['act', 'watch', 'skip'] },
           whyItMatters: { type: 'string' },
           category: { type: 'string', enum: [...categories] },
+          brandCategories: { type: 'array', items: { type: 'string', enum: [...brandCategories] } },
+          audiences: { type: 'array', items: { type: 'string', enum: [...audienceMarkets] } },
           tags: { type: 'array', items: { type: 'string' } },
           evidence: { type: 'array', items: { type: 'string' } },
         },
@@ -423,11 +429,19 @@ function parseTrends(text: string, items: SourceItem[], date: string): Draft[] |
       typeof trend.category === 'string' && (categories as readonly string[]).includes(trend.category)
         ? trend.category
         : 'Entertainment';
+    // An empty list is an answer (no brand angle); a missing one leaves the card
+    // untagged, so Beranda matches it on its category instead
+    const tagged = Array.isArray(trend.brandCategories)
+      ? [...new Set(trend.brandCategories.filter(isBrandCategory))]
+      : undefined;
+    const audiences = Array.isArray(trend.audiences) ? [...new Set(trend.audiences.filter(isAudienceMarket))] : undefined;
 
     drafts.push({
       id: `live-${date}-${drafts.length + 1}-${slug(tags[0] ?? signal)}`,
       source: mainSource(cited),
       category,
+      ...(tagged && { brandCategories: tagged }),
+      ...(audiences && { audiences }),
       tags,
       observedOn: date,
       signal: prose(signal, 280),

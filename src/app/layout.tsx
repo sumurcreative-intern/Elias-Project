@@ -1,23 +1,29 @@
 import type { Metadata } from 'next';
-import { Archivo, Inter, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
-const archivo = Archivo({
-  subsets: ['latin'],
-  style: ['normal', 'italic'],
+// Self-hosted (latin, variable) so builds never depend on reaching Google Fonts.
+// next/font/google silently swaps in a fallback when the download fails.
+const archivo = localFont({
+  src: [
+    { path: './fonts/Archivo-Variable.woff2', weight: '100 900', style: 'normal' },
+    { path: './fonts/Archivo-Italic-Variable.woff2', weight: '100 900', style: 'italic' },
+  ],
   variable: '--font-archivo',
 });
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['600'],
+const inter = localFont({
+  src: './fonts/Inter-Variable.woff2',
+  weight: '100 900',
   variable: '--font-inter-family',
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
+const jetbrainsMono = localFont({
+  src: './fonts/JetBrainsMono-Variable.woff2',
+  weight: '100 800',
   variable: '--font-jetbrains-mono',
+  // The default Arial-based metric fallback would render mono text proportionally
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {

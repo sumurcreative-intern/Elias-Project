@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isAuthRetryableFetchError } from '@supabase/supabase-js';
 import { isCreativeRole } from '@/lib/creativeRoles';
 import { dedupe, getCachedInsight, refundUserBudget, setCachedInsight, takeUserBudget } from '@/lib/elias/cache';
 import { executionBrief } from '@/lib/elias/brief';
@@ -92,8 +93,13 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
-  if (!user) return fail(401, { code: 'unauthorized', message: 'Masuk dulu untuk meminta analisis Elias.' });
+  // Supabase unreachable: the session is unknown, so don't tell a signed-in user to log in
+  if (isAuthRetryableFetchError(authError)) {
+    return fail(503, { code: 'upstream', message: 'Elias belum bisa memeriksa sesi kamu. Periksa koneksi lalu coba lagi.' });
+  }
+  if (!user) return fail(401, { code: 'unauthorized', message: 'Sesi kamu sudah berakhir. Masuk lagi untuk meminta analisis Elias.' });
 
   let body: unknown;
   try {

@@ -19,28 +19,11 @@ import { creativeRoleLabels } from '@/lib/creativeRoles';
 import { LocateError, locateUser } from '@/lib/locateUser';
 import { createClient } from '@/lib/supabase/client';
 import { errorMessage } from '@/lib/supabase/errors';
+import { brandCategoryOptions } from '@/lib/brandCategories';
 import { targetMarkets } from '@/lib/targetMarkets';
 import { DropdownField, TextField, type FormStatus, type SelectOption } from '../auth/fields';
 import SignOutButton from '../SignOutButton';
 import OnboardingForm from './OnboardingForm';
-
-// The industry a brand works in; keep in sync with profiles_category_check
-const categories: SelectOption[] = [
-  { value: 'beauty', label: 'Beauty' },
-  { value: 'fashion', label: 'Fashion' },
-  { value: 'food_beverage', label: 'Food & Beverage' },
-  { value: 'health_wellness', label: 'Health & Wellness' },
-  { value: 'sports', label: 'Sports' },
-  { value: 'arts', label: 'Arts' },
-  { value: 'entertainment', label: 'Entertainment' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'education', label: 'Education' },
-  { value: 'travel', label: 'Travel' },
-  { value: 'home_living', label: 'Home & Living' },
-  { value: 'automotive', label: 'Automotive' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'parenting', label: 'Parenting & Kids' },
-];
 
 // The PRD's seven creative roles: Elias tailors every recommendation to the one picked
 const roles: SelectOption[] = Object.entries(creativeRoleLabels).map(([value, label]) => ({ value, label }));
@@ -189,7 +172,7 @@ export default function ProfileForm({ initial }: { initial: ProfileAnswers | nul
         icon={SquaresFour}
         label="Kategori"
         name="category"
-        options={categories}
+        options={brandCategoryOptions}
         value={category}
         onChange={setCategory}
         hint="Kategori industri brand kamu."
