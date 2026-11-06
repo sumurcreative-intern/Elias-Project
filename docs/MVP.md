@@ -73,8 +73,16 @@ only after design-lead and supervisor sign-off.
     - Captured at most once an hour on any Beranda visit and by the cycle, merged into `google_trends_snapshots` per term per WIB day (`src/lib/insights/searchTrends.ts`); kept 30 days by pg_cron `purge-old-google-trends`
     - The prompt gets up to 20 searches seen in the last 24h as `<search_trends>` (`G1`…), with traffic level, start time, "N hari berturut-turut" streak and news titles; evidence links to the term's Trends explore page
     - [ ] Capture hourly from a cron instead of visits (with the warm-up cron), so quiet hours aren't missed
+  - [x] Reddit (`src/lib/reddit.ts`): public Atom RSS of r/indonesia's top posts of the day (`REDDIT_SUBREDDITS` overrides), one request per cycle, cached 1h, 15-min backoff after a 429. Titles, permalinks and text excerpts only (no scores or comment counts); links stripped from excerpts so no X/Instagram content reaches the prompt
+    - The prompt gets up to 15 posts as `<reddit>` (`R1`…); a Reddit-only trend is "watch" at most, and a card is a Reddit card (Tier 2, hidden from guests) only when most of its evidence is Reddit
+    - [ ] Reddit's Data API terms: confirm RSS use is allowed for this product, or move to OAuth with a registered app
+  - [x] Local news and industry media (`src/lib/newsFeeds.ts`): 10 RSS feeds aggregated in code, each fetched in parallel (8 s timeout), cached 1h, skipped on failure
+    - Local (last 24h, max 15, one outlet at a time): Antara, CNN Indonesia, detikNews, CNBC Indonesia, Republika, Tempo. Industry (last 48h, max 12): Marketeers, MIX Marcomm and SWA through a Google News `site:` feed (no direct feed for non-browsers), CNBC Indonesia Tech and Lifestyle, DailySocial
+    - No usable feed on 6 Nov 2026: Kompas, Liputan6, Kumparan, Suara, IDN Times, Kontan, Bisnis
+    - The prompt gets `<local_news>` (`L1`…) and `<industry_news>` (`M1`…); news alone is context, and one company's announcement is never a card. Cards resting mainly on them have source `news` ("Media Indonesia", Tier 1)
+    - [ ] Apply `20261106090000_insight_news_source.sql`; until then those cards are saved as `gdelt`
 - [x] Generation cycle (`src/lib/insights/live.ts`): first request of the WIB day builds it, fixed until the next day; Beranda no longer reads `mock.ts`
-  - Two stages on OpenRouter: one call picks up to 6 trends citing input ids, then 7 parallel per-role calls write recommendations (8 requests/day)
+  - Two stages on OpenRouter: one call picks up to 12 trends citing input ids (10 kept per day), then 7 parallel per-role calls write recommendations (8 requests/day)
   - Cards carry only measured movement (views gained, rank change, new on chart vs. the previous stored day), never percentages or life-cycle claims. Each card links its evidence (videos/articles)
   - Failure shows "Feed hari ini belum tersedia" (never sample cards) and retries after 10 minutes
   - [x] Store each cycle in `insight_cycles` / `insights` (written with `SUPABASE_SECRET_KEY`; without it today's cycle stays in memory only)

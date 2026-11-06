@@ -31,6 +31,7 @@ export function executionBrief({ trendTopic, role, insight, news, youtube }: Bri
   if (insight.decision !== 'skip') {
     lines.push(`Format: ${executionFormatLabels[insight.action.format]}`, `Angle: ${insight.action.angle}`);
     if (insight.action.steps.length) lines.push('Langkah:', ...insight.action.steps.map((step, i) => `${i + 1}. ${step}`));
+    if (insight.copy) lines.push('Copy:', `Hook: ${insight.copy.hook}`, `Caption: ${insight.copy.caption}`, `CTA: ${insight.copy.cta}`);
   }
   lines.push(`Kenapa: ${insight.why}`);
   if (news.status === 'ok') lines.push('', 'Konteks berita (GDELT, 24 jam):', news.summary);

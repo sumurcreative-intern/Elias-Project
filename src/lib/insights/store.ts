@@ -78,6 +78,11 @@ const cardColumns =
 const TAGS_MIGRATION = '20261105090000_insight_persona_tags.sql';
 const tagColumns = 'brand_categories, audiences';
 const missingColumn = (error: { code?: string } | null) => error?.code === '42703' || error?.code === 'PGRST204';
+// Until 20261106090000_insight_news_source.sql is applied, the source check
+// rejects "news": those cards are saved under GDELT, the other news source,
+// rather than losing the day and spending quota on generating it again
+const NEWS_MIGRATION = '20261106090000_insight_news_source.sql';
+const checkViolation = (error: { code?: string } | null) => error?.code === '23514';
 
 function readCards(supabase: SupabaseClient, from: string, columns: string) {
   return supabase
@@ -150,12 +155,21 @@ export async function saveCycle(date: string, insights: Insight[]): Promise<void
     recommendations: insight.recommendations,
     evidence: insight.evidence ?? [],
   }));
-  let { error: cardsError } = await admin.from('insights').insert(rows);
+  // Each fallback below keeps the ones before it
+  let tagged = true;
+  const insertCards = (list: typeof rows) =>
+    admin
+      .from('insights')
+      .insert(tagged ? list : list.map(({ brand_categories: _categories, audiences: _audiences, ...row }) => row));
+  let { error: cardsError } = await insertCards(rows);
   if (missingColumn(cardsError)) {
     console.warn(`Insight store: saving cards without persona tags; apply ${TAGS_MIGRATION}`);
-    ({ error: cardsError } = await admin
-      .from('insights')
-      .insert(rows.map(({ brand_categories: _categories, audiences: _audiences, ...row }) => row)));
+    tagged = false;
+    ({ error: cardsError } = await insertCards(rows));
+  }
+  if (checkViolation(cardsError) && rows.some((row) => row.source === 'news')) {
+    console.warn(`Insight store: saving Media Indonesia cards as GDELT; apply ${NEWS_MIGRATION}`);
+    ({ error: cardsError } = await insertCards(rows.map((row) => (row.source === 'news' ? { ...row, source: 'gdelt' } : row))));
   }
   if (cardsError) {
     console.error('Insight store: saving the cards failed', cardsError);

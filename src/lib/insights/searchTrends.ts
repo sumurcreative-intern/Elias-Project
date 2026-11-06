@@ -72,12 +72,13 @@ async function capture(date: string): Promise<SearchTrend[]> {
 }
 
 /**
- * Reads the feed and stores it, at most once an hour; cheap to call on every
- * request. Resolves to the feed's searches, or an empty list when skipped.
+ * Reads the feed and stores it, at most once an hour (or `minIntervalMs`);
+ * cheap to call on every request. Resolves to the feed's searches, or an
+ * empty list when skipped.
  */
-export function captureSearchTrends(date: string): Promise<SearchTrend[]> {
+export function captureSearchTrends(date: string, minIntervalMs = CAPTURE_INTERVAL_MS): Promise<SearchTrend[]> {
   if (state.pending) return state.pending;
-  if (Date.now() - state.lastAt < CAPTURE_INTERVAL_MS) return Promise.resolve([]);
+  if (Date.now() - state.lastAt < minIntervalMs) return Promise.resolve([]);
   state.lastAt = Date.now();
   state.pending = capture(date).finally(() => (state.pending = null));
   return state.pending;
@@ -97,11 +98,17 @@ function daysInRow(dates: Set<string>, newest: string): number {
 export async function recentSearchTrends(date: string): Promise<CapturedSearch[]> {
   state.lastAt = 0;
   const live = await captureSearchTrends(date);
-  const admin = createAdminClient();
-  if (!admin) {
+  if (!createAdminClient()) {
     const now = new Date().toISOString();
     return live.slice(0, MAX_TERMS).map((trend) => ({ ...trend, firstSeenAt: now, daysInRow: 1 }));
   }
+  return storedSearchTrends(date);
+}
+
+/** The stored searches of the last 24 hours, without capturing; empty without the secret key. */
+export async function storedSearchTrends(date: string): Promise<CapturedSearch[]> {
+  const admin = createAdminClient();
+  if (!admin) return [];
 
   const { data, error } = await admin
     .from('google_trends_snapshots')

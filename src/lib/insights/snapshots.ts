@@ -77,21 +77,20 @@ type StoredRow = {
 };
 
 /**
- * Charts already stored for `date`, in rank order, keyed by chart. Lets a
- * retried cycle reuse today's searches (101 quota units each) instead of
- * paying for them again.
+ * Charts already stored for `date`, in rank order, keyed by chart; every
+ * stored chart when `charts` is omitted. Lets a retried cycle reuse today's
+ * searches (101 quota units each) instead of paying for them again.
  */
-export async function readStoredCharts(date: string, charts: string[]): Promise<Map<string, YouTubeVideo[]>> {
+export async function readStoredCharts(date: string, charts?: string[]): Promise<Map<string, YouTubeVideo[]>> {
   const stored = new Map<string, YouTubeVideo[]>();
   const admin = createAdminClient();
-  if (!admin || !charts.length) return stored;
-  const { data, error } = await admin
+  if (!admin || charts?.length === 0) return stored;
+  let query = admin
     .from('youtube_chart_snapshots')
     .select('chart, video_id, title, channel_title, view_count, like_count, comment_count, published_at, duration, tags')
-    .eq('snapshot_date', date)
-    .in('chart', charts)
-    .order('rank', { ascending: true })
-    .returns<StoredRow[]>();
+    .eq('snapshot_date', date);
+  if (charts) query = query.in('chart', charts);
+  const { data, error } = await query.order('rank', { ascending: true }).returns<StoredRow[]>();
   if (error) console.error('YouTube snapshots: reading failed', error);
   for (const row of data ?? []) {
     const videos = stored.get(row.chart) ?? [];

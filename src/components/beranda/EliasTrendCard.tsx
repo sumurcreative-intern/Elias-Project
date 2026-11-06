@@ -200,7 +200,7 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
 
       {state.kind === 'idle' && (
         <>
-          <p className="text-sm text-paper/70">So what untuk peran kamu, plus satu action brief yang bisa dikerjakan hari ini.</p>
+          <p className="text-sm text-paper/70">So what untuk peran kamu, satu action brief yang bisa dikerjakan hari ini, plus saran copy sesuai tone brand.</p>
           <button type="button" onClick={analyse} className={primaryCta}>
             <Lightning size={18} weight="fill" aria-hidden />
             Analisis untuk brand ini
@@ -274,6 +274,26 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
               </>
             )}
           </div>
+
+          {state.result.decision !== 'skip' && state.result.copy && (
+            <div className="flex flex-col gap-2">
+              <p className={sectionLabel}>{archetype ? `Saran copy · tone ${archetype}` : 'Saran copy'}</p>
+              <dl className="flex flex-col gap-3 rounded-md border border-paper/20 p-3 md:p-4">
+                {(
+                  [
+                    ['Hook', state.result.copy.hook],
+                    ['Caption', state.result.copy.caption],
+                    ['CTA', state.result.copy.cta],
+                  ] as const
+                ).map(([label, text]) => (
+                  <div key={label} className="flex flex-col gap-0.5">
+                    <dt className={`${monoMeta} text-paper/50`}>{label}</dt>
+                    <dd className="text-md text-paper/90">{text}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
 
           <ContextAccordion news={state.news} youtube={state.youtube} />
 

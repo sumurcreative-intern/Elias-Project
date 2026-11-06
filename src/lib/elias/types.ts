@@ -65,8 +65,20 @@ export type EliasInsight = {
     /** Empty when the decision is skip */
     steps: string[];
   };
+  /**
+   * Ready-to-use copy in the brand's archetype tone, for its target market.
+   * Absent on a skip, and on answers cached before it existed
+   */
+  copy?: CopySuggestion;
   /** One-line rationale */
   why: string;
+};
+
+export type CopySuggestion = {
+  /** The opening line: first frame, first slide or first sentence */
+  hook: string;
+  caption: string;
+  cta: string;
 };
 
 export type RecommendationStatus = 'EXECUTE_TODAY' | 'WATCH' | 'SKIP';

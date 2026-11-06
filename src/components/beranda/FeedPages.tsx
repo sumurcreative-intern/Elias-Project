@@ -25,8 +25,9 @@ export default function FeedPages({ page, pageCount, first, last, total, query, 
   const scope = useRef<HTMLDivElement>(null);
   const firstRender = useRef(true);
 
-  // AppShell reveals the first page on load. Cards of a later page mount
-  // after that reveal, and would stay hidden by the [data-animate] CSS
+  // AppShell reveals the first page on load. Cards of a later page, or of the
+  // other view (`tampil`, which keeps page 1), mount after that reveal, and
+  // would stay hidden by the [data-animate] CSS
   useGSAP(
     () => {
       if (firstRender.current) {
@@ -43,7 +44,7 @@ export default function FeedPages({ page, pageCount, first, last, total, query, 
       });
       return () => mm.revert();
     },
-    { scope, dependencies: [page] },
+    { scope, dependencies: [page, query] },
   );
 
   function goToPage(next: number) {

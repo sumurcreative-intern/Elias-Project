@@ -1,5 +1,5 @@
 import type { Verdict } from '../insights/types';
-import { executionFormats, type EliasInsight, type ExecutionFormat } from './types';
+import { executionFormats, type CopySuggestion, type EliasInsight, type ExecutionFormat } from './types';
 
 // Small models sometimes answer with the Indonesian label or a capital letter
 const verdictAliases: Record<string, Verdict> = {
@@ -47,6 +47,14 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
 
+/** The copy block when every part is filled; a missing one never fails the whole call. */
+function parseCopy(value: unknown): CopySuggestion | undefined {
+  if (!isRecord(value)) return undefined;
+  const { hook, caption, cta } = value;
+  if (!nonEmpty(hook) || !nonEmpty(caption) || !nonEmpty(cta)) return undefined;
+  return { hook: cleanCopy(hook, 200), caption: cleanCopy(caption, 500), cta: cleanCopy(cta, 120) };
+}
+
 /** Validates and cleans a model reply; null when it doesn't match the contract. */
 export function parseInsight(text: string): EliasInsight | null {
   const data = extractJson(text);
@@ -65,12 +73,15 @@ export function parseInsight(text: string): EliasInsight | null {
       : 'none';
   const steps = Array.isArray(action.steps) ? action.steps.filter(nonEmpty).slice(0, 4).map((step) => cleanCopy(step, 240)) : [];
 
+  const copy = skip ? undefined : parseCopy(data.copy);
+
   // A skip never carries an execution plan, whatever the model sent
   return {
     decision,
     headline: cleanCopy(headline, 240),
     soWhat: cleanCopy(soWhat),
     action: { format: skip ? 'none' : format, angle: nonEmpty(action.angle) ? cleanCopy(action.angle, 300) : '', steps: skip ? [] : steps },
+    ...(copy && { copy }),
     why: cleanCopy(why, 240),
   };
 }

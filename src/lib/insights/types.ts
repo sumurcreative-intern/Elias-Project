@@ -5,12 +5,14 @@ import type { CreativeRole } from '../creativeRoles';
  * Sources Elias can actually query (PRD Ch. 9). TikTok and Instagram are
  * deliberately absent: no card may imply coverage of them (BR-5, DS-3).
  */
-export type SourceId = 'google_trends' | 'youtube' | 'gdelt' | 'reddit' | 'x';
+export type SourceId = 'google_trends' | 'youtube' | 'gdelt' | 'news' | 'reddit' | 'x';
 
 export const sources: Record<SourceId, { label: string; tier: 1 | 2 }> = {
   google_trends: { label: 'Google Trends', tier: 1 },
   youtube: { label: 'YouTube', tier: 1 },
   gdelt: { label: 'GDELT', tier: 1 },
+  // Indonesian outlets and industry media read from their RSS feeds (src/lib/newsFeeds.ts)
+  news: { label: 'Media Indonesia', tier: 1 },
   reddit: { label: 'Reddit', tier: 2 },
   x: { label: 'X', tier: 2 },
 };

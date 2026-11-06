@@ -8,6 +8,7 @@ import FeedScope from '@/components/beranda/FeedScope';
 import InsightCard, { type Flavour } from '@/components/beranda/InsightCard';
 import ProfilePrompt from '@/components/beranda/ProfilePrompt';
 import QuietDay from '@/components/beranda/QuietDay';
+import TrendingTopics from '@/components/beranda/TrendingTopics';
 import { archetypeDirections } from '@/lib/archetypes';
 import { brandCategoryLabels, isBrandCategory } from '@/lib/brandCategories';
 import { creativeRoleFor, creativeRoleLabels } from '@/lib/creativeRoles';
@@ -16,6 +17,7 @@ import { brandContextFor, fetchProfile } from '@/lib/elias/brandProfile';
 import { fitsBrand, rankForAudience } from '@/lib/insights/brandFit';
 import { feedPage, groupByDay } from '@/lib/insights/feed';
 import { getRecentFeed } from '@/lib/insights/live';
+import { getTrending } from '@/lib/insights/trending';
 import type { StoredCard } from '@/lib/insights/store';
 import { sources, type Insight } from '@/lib/insights/types';
 import { createClient } from '@/lib/supabase/server';
@@ -81,6 +83,8 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
   const time = profile?.notification_time?.slice(0, 5) ?? '06:00';
   // Switch for reviewing the no-signal branch (V6)
   const feed = await getRecentFeed(supabase, { time, quiet: siklus === 'sepi' });
+  // After the feed, so the first visit of the day reads the charts its cycle just stored
+  const trending = await getTrending(feed.date);
   // Guests get Tier-1 sources only (BR-4)
   const allCards = flavour ? feed.cards : feed.cards.filter((card) => sources[card.insight.source].tier === 1);
 
@@ -154,6 +158,8 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
         </section>
 
         {!flavour && <ProfilePrompt />}
+
+        <TrendingTopics initial={trending} brandLabel={brand?.label ?? null} />
 
         {brand && allCards.length > 0 && (
           <FeedScope
