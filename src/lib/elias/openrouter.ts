@@ -17,7 +17,17 @@ const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 //   the whole request.
 // The free lineup changes often; OPENROUTER_MODELS (comma-separated, first is
 // primary) overrides this without a code change.
-const DEFAULT_MODELS = ['google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free'];
+// Only free models that support strict json_schema: Gemma lists plain JSON
+// mode only, so with require_parameters every call skipped it ("No endpoints
+// found", 10 Nov 2026) and landed on openrouter/free, which picked 2B models
+// that wrote generic answers. Fastest first; Nemotron is the most specific
+// but often takes over a minute. No openrouter/free catch-all: a clear
+// "busy, try again" beats a confident generic call
+const DEFAULT_MODELS = [
+  'xingchen-agi/xing4.0-29b-a4b:free',
+  'nvidia/nemotron-3.5-super-vl:free',
+  'dots-studio/dots-3-note-preview:free',
+];
 
 /** A comma-separated model list from the environment (first is primary), else the fallback. */
 export function modelsFrom(value: string | undefined, fallback: string[]): string[] {
@@ -115,6 +125,10 @@ export async function requestCompletion({
         models: modelList,
         messages,
         response_format: { type: 'json_schema', json_schema: { name: schemaName, strict: true, schema } },
+        // Only route to models that honour every parameter above. Without it,
+        // openrouter/free landed on cohere/north-mini-code:free (10 Nov 2026),
+        // which ignores response_format and wrote JSON that didn't parse
+        provider: { require_parameters: true },
         temperature: 0.4,
         // openrouter/free can land on a reasoning model, which spends output
         // tokens thinking before it answers. Keep that short and out of the
@@ -168,8 +182,11 @@ export async function generateInsight(
     ],
     schemaName: 'elias_insight',
     schema: insightSchema,
-    maxTokens: 4000,
-    timeoutMs: 60_000,
+    // Reasoning models spent all of 4000 thinking and returned nothing
+    // (finish_reason "length", 10 Nov 2026). Free models bill per request,
+    // and Nemotron needs over a minute when the faster models are busy
+    maxTokens: 12_000,
+    timeoutMs: 100_000,
   });
   if (!completion.ok) return completion;
 

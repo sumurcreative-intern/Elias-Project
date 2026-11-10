@@ -512,7 +512,9 @@ async function recommendationsFor(role: CreativeRole, drafts: Draft[]): Promise<
     ],
     schemaName: 'elias_role_recommendations',
     schema: recommendationsSchema,
-    maxTokens: 8_000,
+    // The reply is short, but Nemotron's reasoning counts against this and ran
+    // out at 8,000 (10 Nov 2026). Free models bill per request, so headroom is free
+    maxTokens: 16_000,
     timeoutMs: 120_000,
   });
   if (!completion.ok) {
