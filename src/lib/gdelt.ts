@@ -101,8 +101,15 @@ const busy = (query: string): NewsContext => ({ status: 'rate_limited', query, a
  * Up to three news headlines from the last 24 hours for a keyword. Never
  * throws; every failure becomes a context the prompt can still use.
  */
-export async function fetchGdeltNewsContext(keyword: string): Promise<NewsContext> {
-  const query = toGdeltQuery(keyword);
+/** One keyword, or several of which any may match ("(matcha OR "es teh")"). */
+function toGdeltAnyQuery(keywords: string[]): string | null {
+  const terms = [...new Set(keywords.map(toGdeltQuery).filter((term): term is string => term !== null))];
+  if (terms.length <= 1) return terms[0] ?? null;
+  return `(${terms.join(' OR ')})`;
+}
+
+export async function fetchGdeltNewsContext(keywords: string | string[]): Promise<NewsContext> {
+  const query = toGdeltAnyQuery(typeof keywords === 'string' ? [keywords] : keywords);
   if (!query) {
     return { status: 'skipped', query: null, articles: [], summary: 'Tidak ada kata kunci berita untuk tren ini.' };
   }

@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     brandContext: brandContextFor(user.id, profile),
     trendTopic: input.targetTopic,
     userRole: creativeRoleFor(profile.role),
-    newsKeyword: input.targetTopic,
+    newsKeywords: [input.targetTopic],
   };
 
   // Same per-user cap as the Beranda card: a test run is a real OpenRouter request

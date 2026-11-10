@@ -15,16 +15,32 @@ import {
   type InsightError,
   type InsightRequest,
   type InsightResponse,
+  type TrendDetails,
 } from '@/lib/elias/types';
+import type { Verdict } from '@/lib/insights/types';
 import { createClient } from '@/lib/supabase/server';
 
 const MAX_TOPIC_LENGTH = 500;
 const MAX_KEYWORD_LENGTH = 60;
+const MAX_KEYWORDS = 3;
+const MAX_TAGS = 8;
+const MAX_EVIDENCE = 5;
 
-/** The explicit keyword, else the first quoted term in the trend ('matcha'), else none. */
-function newsKeywordFor(request: InsightRequest): string | null {
-  if (request.newsKeyword) return request.newsKeyword;
-  return request.trendTopic.match(/['"‘“]([^'"’”]{3,60})['"’”]/)?.[1] ?? null;
+// Formats and platforms, not subjects: "shorts" or "asmr" find news about
+// anything, which then reads as context for the trend
+const formatWords = new Set([
+  'shorts', 'short', 'video', 'videos', 'viral', 'trending', 'fyp', 'live', 'livestream', 'streaming',
+  'asmr', 'unboxing', 'review', 'tutorial', 'vlog', 'reels', 'tiktok', 'youtube', 'instagram',
+]);
+
+const isSubject = (keyword: string) => keyword.toLowerCase().split(/\s+/).some((word) => !formatWords.has(word));
+
+/** The explicit subject keywords, else the first quoted term in the trend ('matcha'), else none. */
+function newsKeywordsFor(request: InsightRequest): string[] {
+  const subjects = (request.newsKeywords ?? []).filter(isSubject).slice(0, MAX_KEYWORDS);
+  if (subjects.length) return subjects;
+  const quoted = request.trendTopic.match(/['"‘“]([^'"’”]{3,60})['"’”]/)?.[1];
+  return quoted ? [quoted] : [];
 }
 
 const skippedNews: NewsContext = { status: 'skipped', query: null, articles: [], summary: 'Tidak ada kata kunci berita untuk tren ini.' };
@@ -54,6 +70,8 @@ function fail(status: number, error: InsightError) {
 
 const optionalString = (value: unknown): value is string | null => value === null || typeof value === 'string';
 
+const isVerdict = (value: unknown): value is Verdict => value === 'act' || value === 'watch' || value === 'skip';
+
 function parseBrandContext(value: unknown): BrandContext | null {
   if (typeof value !== 'object' || value === null) return null;
   const brand = value as Record<string, unknown>;
@@ -72,19 +90,64 @@ function parseBrandContext(value: unknown): BrandContext | null {
   };
 }
 
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+const clip = (value: string, max: number) => value.replace(/\s+/g, ' ').trim().slice(0, max);
+
+/** Optional, so a malformed block drops the details rather than the whole call. */
+function parseTrendDetails(value: unknown): TrendDetails | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const d = value as Record<string, unknown>;
+  if (typeof d.source !== 'string' || typeof d.observedOn !== 'string' || typeof d.whyItMatters !== 'string') return undefined;
+  if (!isStringArray(d.tags) || !optionalString(d.lifecycle) || !isVerdict(d.generalVerdict)) return undefined;
+  if (!Array.isArray(d.evidence)) return undefined;
+  const evidence = (d.evidence as unknown[])
+    .filter(
+      (item): item is { title: string; detail: string } =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).title === 'string' &&
+        typeof (item as Record<string, unknown>).detail === 'string',
+    )
+    .slice(0, MAX_EVIDENCE)
+    .map((item) => ({ title: clip(item.title, 200), detail: clip(item.detail, 120) }));
+  return {
+    source: clip(d.source, 40),
+    observedOn: clip(d.observedOn, 10),
+    tags: d.tags.slice(0, MAX_TAGS).map((tag) => clip(tag, MAX_KEYWORD_LENGTH)).filter(Boolean),
+    lifecycle: d.lifecycle ? clip(d.lifecycle, 300) : null,
+    whyItMatters: clip(d.whyItMatters, 600),
+    generalVerdict: d.generalVerdict,
+    evidence,
+  };
+}
+
 function parseRequest(body: unknown): InsightRequest | null {
   if (typeof body !== 'object' || body === null) return null;
-  const { brandContext, trendTopic, userRole, newsKeyword } = body as Record<string, unknown>;
+  const { brandContext, trendTopic, userRole, newsKeywords, trendDetails } = body as Record<string, unknown>;
   const brand = parseBrandContext(brandContext);
   if (!brand || typeof trendTopic !== 'string' || !isCreativeRole(userRole)) return null;
-  if (newsKeyword !== undefined && typeof newsKeyword !== 'string') return null;
+  if (newsKeywords !== undefined && !isStringArray(newsKeywords)) return null;
   const topic = trendTopic.trim().slice(0, MAX_TOPIC_LENGTH);
-  const keyword = newsKeyword?.trim().slice(0, MAX_KEYWORD_LENGTH);
-  return topic ? { brandContext: brand, trendTopic: topic, userRole, ...(keyword && { newsKeyword: keyword }) } : null;
+  const keywords = (newsKeywords ?? [])
+    .map((keyword) => keyword.trim().slice(0, MAX_KEYWORD_LENGTH))
+    .filter(Boolean)
+    .slice(0, MAX_TAGS);
+  const details = parseTrendDetails(trendDetails);
+  return topic
+    ? {
+        brandContext: brand,
+        trendTopic: topic,
+        userRole,
+        ...(details && { trendDetails: details }),
+        ...(keywords.length > 0 && { newsKeywords: keywords }),
+      }
+    : null;
 }
 
 /**
- * POST { brandContext, trendTopic, userRole, newsKeyword? } → role-tailored
+ * POST { brandContext, trendTopic, userRole, trendDetails?, newsKeywords? } → role-tailored
  * call on one trend, grounded on the last 24 hours of GDELT news and today's
  * YouTube Indonesia trending chart.
  * Signed-in only: the free tier allows 50 requests a day for the whole app.
@@ -128,9 +191,9 @@ export async function POST(request: Request) {
     if (!budget.allowed) return { overBudget: budget.retryAfter };
     // Neither source can fail the call: problems come back as a status the
     // prompt and the card both handle
-    const keyword = newsKeywordFor(insightRequest);
+    const keywords = newsKeywordsFor(insightRequest);
     const [news, youtube] = await Promise.all([
-      keyword ? fetchGdeltNewsContext(keyword) : Promise.resolve(skippedNews),
+      keywords.length ? fetchGdeltNewsContext(keywords) : Promise.resolve(skippedNews),
       fetchYouTubeTrends('ID', 3),
     ]);
     const generated = await generateInsight(insightRequest, news, youtube);

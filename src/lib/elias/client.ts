@@ -7,8 +7,8 @@ import { insightCacheKey, type InsightRequest, type InsightResponse } from './ty
 
 type Success = Extract<InsightResponse, { ok: true }>;
 
-// v3: answers carry their news and YouTube context; older entries lack them
-const STORAGE_PREFIX = 'elias.insight.v3.';
+// v4: answers grounded on the trend's details; v3 entries were generic
+const STORAGE_PREFIX = 'elias.insight.v4.';
 const memory = new Map<string, Success>();
 const inFlight = new Map<string, Promise<InsightResponse>>();
 

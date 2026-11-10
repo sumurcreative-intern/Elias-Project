@@ -22,21 +22,43 @@ export type BrandContext = {
   goals: string[];
 };
 
+/**
+ * What the daily cycle already knows about the trend, beyond its one-line
+ * signal. Without it every call leans on the brand facts, which are the same
+ * for every card, and the answers blur together.
+ */
+export type TrendDetails = {
+  /** Source label, e.g. "YouTube" */
+  source: string;
+  /** ISO date the source observed the movement */
+  observedOn: string;
+  tags: string[];
+  lifecycle: string | null;
+  whyItMatters: string;
+  /** The cycle's call for every brand, before this brand is weighed */
+  generalVerdict: Verdict;
+  /** What the card is based on: video or article titles, with channel or domain */
+  evidence: { title: string; detail: string }[];
+};
+
 export type InsightRequest = {
   brandContext: BrandContext;
   trendTopic: string;
   userRole: CreativeRole;
+  trendDetails?: TrendDetails;
   /**
-   * Short keyword for the GDELT news lookup, e.g. "matcha". A whole trend
-   * sentence matches no articles, so without it the server looks for a quoted
-   * term inside trendTopic and skips the news lookup if there is none.
+   * Short keywords for the GDELT news lookup, e.g. ["matcha"]; any of them
+   * may match. A whole trend sentence matches no articles, so without them the
+   * server looks for a quoted term inside trendTopic and skips the news lookup
+   * if there is none.
    */
-  newsKeyword?: string;
+  newsKeywords?: string[];
 };
 
 /** Shared by the server and client caches: identical requests never hit OpenRouter twice. */
 export function insightCacheKey({ brandContext, trendTopic, userRole }: InsightRequest): string {
-  return `${brandContext.id}_${trendTopic}_${userRole}`;
+  // v2: calls grounded on the trend's details; v1 answers were too generic to keep serving
+  return `v2_${brandContext.id}_${trendTopic}_${userRole}`;
 }
 
 export const executionFormats = ['carousel', 'story', 'short_video', 'single_post', 'long_video', 'thread', 'none'] as const;

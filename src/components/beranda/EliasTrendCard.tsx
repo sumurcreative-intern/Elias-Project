@@ -19,7 +19,7 @@ import {
   type NewsContext,
   type YouTubeTrends,
 } from '@/lib/elias/types';
-import type { Insight } from '@/lib/insights/types';
+import { sources, type Insight } from '@/lib/insights/types';
 
 type EliasTrendCardProps = {
   insight: Insight;
@@ -143,8 +143,23 @@ function ContextAccordion({ news, youtube }: { news: NewsContext; youtube: YouTu
  * when asked, since every fresh answer spends the shared free-tier quota.
  */
 export default function EliasTrendCard({ insight, brandContext, userRole }: EliasTrendCardProps) {
-  // The first tag is the short keyword GDELT needs; a whole sentence matches no news
-  const request: InsightRequest = { brandContext, trendTopic: insight.signal, userRole, newsKeyword: insight.tags[0] };
+  // Tags are the short keywords GDELT needs; a whole sentence matches no news
+  const request: InsightRequest = {
+    brandContext,
+    trendTopic: insight.signal,
+    userRole,
+    trendDetails: {
+      source: sources[insight.source].label,
+      observedOn: insight.observedOn,
+      tags: insight.tags,
+      lifecycle: insight.lifecycle ?? null,
+      whyItMatters: insight.whyItMatters,
+      generalVerdict: insight.verdict,
+      evidence: (insight.evidence ?? []).map(({ title, detail }) => ({ title, detail })),
+    },
+    // The server drops format words like "shorts" and keeps the first few subjects
+    newsKeywords: insight.tags,
+  };
   const archive = useArchive();
   const [state, setState] = useState<State>({ kind: 'idle' });
   const [copied, setCopied] = useState(false);
