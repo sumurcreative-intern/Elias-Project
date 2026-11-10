@@ -19,6 +19,7 @@ export const brandCategoryLabels = {
   automotive: 'Automotive',
   finance: 'Finance',
   parenting: 'Parenting & Kids',
+  politics: 'Politics',
 } as const;
 
 export type BrandCategory = keyof typeof brandCategoryLabels;

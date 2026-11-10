@@ -45,6 +45,7 @@ const brandCharts: Record<BrandCategory, string[]> = {
   automotive: ['2'],
   finance: ['25'],
   parenting: [],
+  politics: ['25'],
 };
 
 export type TrendingSearch = {
