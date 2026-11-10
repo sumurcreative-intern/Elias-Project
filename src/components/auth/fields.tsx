@@ -10,6 +10,7 @@ import {
   CaretDown,
   Check,
   CheckCircle,
+  CircleNotch,
   EnvelopeSimple,
   Eye,
   EyeSlash,
@@ -693,24 +694,37 @@ export function RememberRow({
 
 export function SubmitButton({
   disabled,
+  loading = false,
+  loadingLabel = 'Memproses...',
   size = 'responsive',
   children,
 }: {
   disabled: boolean;
+  /** Request in flight: shows a spinner and a "please wait" note, and blocks further taps. */
+  loading?: boolean;
+  loadingLabel?: string;
   size?: Size;
   children: ReactNode;
 }) {
   return (
-    <button
-      data-animate="form-item"
-      type="submit"
-      disabled={disabled}
-      className={`flex w-full items-center justify-center rounded-lg bg-primary px-5 font-semibold text-bg-white transition-[background-color,filter] duration-300 hover:enabled:brightness-95 disabled:cursor-not-allowed disabled:bg-primary-subtle ${
-        size === 'lg' ? 'py-4 text-xl' : 'py-3 text-lg md:py-4 md:text-xl'
-      }`}
-    >
-      {children}
-    </button>
+    <div data-animate="form-item" className="flex flex-col">
+      <button
+        type="submit"
+        disabled={disabled || loading}
+        aria-busy={loading}
+        className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 font-semibold text-bg-white transition-[background-color,filter] duration-300 hover:enabled:brightness-95 ${
+          // Loading keeps the full primary colour so it reads as "working", not "unavailable"
+          loading ? 'cursor-wait bg-primary' : 'bg-primary disabled:cursor-not-allowed disabled:bg-primary-subtle'
+        } ${size === 'lg' ? 'py-4 text-xl' : 'py-3 text-lg md:py-4 md:text-xl'}`}
+      >
+        {loading && <CircleNotch size={20} weight="bold" aria-hidden className="shrink-0 motion-safe:animate-spin" />}
+        {loading ? loadingLabel : children}
+      </button>
+      {/* Stays mounted (empty, zero height) so screen readers announce the note when it appears */}
+      <p role="status" className={`text-center text-xs text-ink-50 md:text-sm ${loading ? 'mt-2' : ''}`}>
+        {loading && 'Mohon tunggu sebentar, tidak perlu menekan tombol lagi.'}
+      </p>
+    </div>
   );
 }
 

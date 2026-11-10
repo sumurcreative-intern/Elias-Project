@@ -82,6 +82,7 @@ export default function SurveyForm({ initial }: { initial: SurveyAnswers | null 
       title="Dari mana kamu pertama kali tahu tentang Elias?"
       subtitle="Jawabanmu membantu kami menjangkau lebih banyak kreator seperti kamu."
       canSubmit={canSubmit}
+      submitting={submitting}
       status={status}
       onSubmit={handleSubmit}
     >

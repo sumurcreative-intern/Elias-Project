@@ -145,6 +145,7 @@ export default function ProfileForm({ initial }: { initial: ProfileAnswers | nul
       title="Lengkapi Profil"
       subtitle="Profilmu menentukan persona Elias"
       canSubmit={canSubmit}
+      submitting={submitting}
       status={status}
       onSubmit={handleSubmit}
     >

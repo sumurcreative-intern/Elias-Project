@@ -70,7 +70,9 @@ export default function LoginForm({ initialStatus }: { initialStatus: FormStatus
 
         <div className="flex flex-col gap-[18px]">
           <FormMessage status={status} />
-          <SubmitButton disabled={!canSubmit}>Masuk</SubmitButton>
+          <SubmitButton disabled={!canSubmit} loading={submitting} loadingLabel="Sedang masuk...">
+            Masuk
+          </SubmitButton>
           <SocialOptions />
         </div>
 

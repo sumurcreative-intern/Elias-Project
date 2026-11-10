@@ -94,6 +94,7 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
       title="Tujuan & Preferensi"
       subtitle="Tujuan & preferensimu menentukan persona Elias"
       canSubmit={canSubmit}
+      submitting={submitting}
       status={status}
       onSubmit={handleSubmit}
     >

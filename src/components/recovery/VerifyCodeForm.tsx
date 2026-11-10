@@ -89,7 +89,9 @@ export default function VerifyCodeForm() {
       actions={
         <>
           <FormMessage status={status} />
-          <SubmitButton disabled={!canSubmit}>Verifikasi Kode</SubmitButton>
+          <SubmitButton disabled={!canSubmit} loading={submitting} loadingLabel="Memverifikasi...">
+            Verifikasi Kode
+          </SubmitButton>
           <p data-animate="form-item" className="text-center text-sm text-txt-black md:text-md" aria-live="polite">
             {secondsLeft > 0 ? (
               <>Kirim ulang kode aktif dalam {secondsLeft} detik</>

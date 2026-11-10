@@ -10,6 +10,7 @@ type OnboardingFormProps = {
   title: string;
   subtitle: string;
   canSubmit: boolean;
+  submitting: boolean;
   status: FormStatus;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
@@ -22,6 +23,7 @@ export default function OnboardingForm({
   title,
   subtitle,
   canSubmit,
+  submitting,
   status,
   onSubmit,
   children,
@@ -48,7 +50,9 @@ export default function OnboardingForm({
         <div className="flex flex-col gap-2.5">{children}</div>
 
         <FormMessage status={status} />
-        <SubmitButton disabled={!canSubmit}>Lanjutkan</SubmitButton>
+        <SubmitButton disabled={!canSubmit} loading={submitting} loadingLabel="Menyimpan...">
+          Lanjutkan
+        </SubmitButton>
       </form>
     </section>
   );

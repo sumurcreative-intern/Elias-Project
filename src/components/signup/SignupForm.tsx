@@ -118,7 +118,9 @@ export default function SignupForm() {
 
         <div className="flex flex-col gap-[18px]">
           <FormMessage status={status} />
-          <SubmitButton disabled={!canSubmit}>Buat Akun</SubmitButton>
+          <SubmitButton disabled={!canSubmit} loading={submitting} loadingLabel="Membuat akun...">
+            Buat Akun
+          </SubmitButton>
           <SocialOptions mediumDivider />
         </div>
 

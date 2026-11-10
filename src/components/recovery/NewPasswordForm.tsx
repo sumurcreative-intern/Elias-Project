@@ -55,7 +55,9 @@ export default function NewPasswordForm() {
       actions={
         <>
           <FormMessage status={status} />
-          <SubmitButton disabled={!canSubmit}>Simpan Kata Sandi Baru</SubmitButton>
+          <SubmitButton disabled={!canSubmit} loading={submitting} loadingLabel="Menyimpan...">
+            Simpan Kata Sandi Baru
+          </SubmitButton>
         </>
       }
     >

@@ -48,7 +48,7 @@ export default function RecoveryEmailForm() {
       actions={
         <>
           <FormMessage status={status} />
-          <SubmitButton disabled={!canSubmit} size="lg">
+          <SubmitButton disabled={!canSubmit} loading={submitting} loadingLabel="Mengirim kode..." size="lg">
             Kirim Kode Verifikasi
           </SubmitButton>
         </>
