@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowSquareOut, BookmarkSimple, CaretDown, Check, CircleNotch, Copy, Lightning, WarningCircle } from '@phosphor-icons/react';
+import { ArrowSquareOut, CaretDown, Check, CircleNotch, Copy, Lightning, WarningCircle } from '@phosphor-icons/react';
 import { archetypeDirections } from '@/lib/archetypes';
-import { useArchive } from '@/lib/archive';
 import { creativeRoleLabels, type CreativeRole } from '@/lib/creativeRoles';
 import { decisionLabels, executionBrief } from '@/lib/elias/brief';
+import { setBrief } from '@/lib/elias/briefs';
 import { cachedInsight, requestInsight } from '@/lib/elias/client';
 import {
   executionFormatLabels,
@@ -160,10 +160,8 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
     // The server drops format words like "shorts" and keeps the first few subjects
     newsKeywords: insight.tags,
   };
-  const archive = useArchive();
   const [state, setState] = useState<State>({ kind: 'idle' });
   const [copied, setCopied] = useState(false);
-  const [briefSaved, setBriefSaved] = useState(false);
   const archetype = brandContext.archetype ? archetypeDirections[brandContext.archetype]?.name : null;
 
   // Session storage only exists in the browser, so a cached answer is restored after mount
@@ -196,13 +194,11 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
     }
   }
 
-  function saveBrief(grounded: Grounded) {
-    const brief = briefFor(grounded);
-    const existing = archive.items.find((item) => item.insightId === insight.id);
-    if (!existing) archive.save(insight, brief);
-    else if (!existing.notes.includes(brief)) archive.setNotes(insight.id, existing.notes ? `${existing.notes}\n\n${brief}` : brief);
-    setBriefSaved(true);
-  }
+  // The card's Save to Archive button stores this brief with the card
+  useEffect(() => {
+    if (state.kind === 'done') setBrief(insight.id, briefFor(state));
+    // briefFor only reads the props of this mounted card
+  }, [state]);
 
   return (
     <section
@@ -313,10 +309,6 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
           <ContextAccordion news={state.news} youtube={state.youtube} />
 
           <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={() => saveBrief(state)} disabled={briefSaved} className={primaryCta}>
-              {briefSaved ? <Check size={18} aria-hidden /> : <BookmarkSimple size={18} aria-hidden />}
-              {briefSaved ? 'Brief tersimpan di Arsip' : 'Simpan ke Arsip'}
-            </button>
             <button type="button" onClick={() => copyBrief(state)} className={secondaryButton}>
               {copied ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}
               {copied ? 'Tersalin' : 'Salin Brief'}

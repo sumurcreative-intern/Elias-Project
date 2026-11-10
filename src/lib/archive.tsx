@@ -26,6 +26,9 @@ export const priorityLabels: Record<ArchivePriority, string> = {
   low: 'Rendah',
 };
 
+/** Whether the saved trend turned out useful, set from the note editor */
+export type ArchiveReaction = 'like' | 'dislike';
+
 export type ArchivedTrend = {
   insightId: string;
   title: string;
@@ -41,6 +44,8 @@ export type ArchivedTrend = {
   /** Account holders only (AR-3); null until set */
   priority: ArchivePriority | null;
   notes: string;
+  /** Absent on entries saved before reactions existed; null when cleared */
+  reaction?: ArchiveReaction | null;
 };
 
 const GUEST_KEY = 'elias.archive.v1.guest';
@@ -168,6 +173,13 @@ export function useArchive() {
 
     setNotes: useCallback(
       (insightId: string, notes: string) => update(insightId, (item) => ({ ...item, notes })),
+      [update],
+    ),
+
+    /** The note and the like/dislike from the note editor, saved together */
+    setNoteAndReaction: useCallback(
+      (insightId: string, notes: string, reaction: ArchiveReaction | null) =>
+        update(insightId, (item) => ({ ...item, notes, reaction })),
       [update],
     ),
 

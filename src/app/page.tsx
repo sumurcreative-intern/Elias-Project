@@ -6,6 +6,7 @@ import CycleUnavailable from '@/components/beranda/CycleUnavailable';
 import FeedPages from '@/components/beranda/FeedPages';
 import FeedScope from '@/components/beranda/FeedScope';
 import InsightCard, { type Flavour } from '@/components/beranda/InsightCard';
+import MasonryGrid from '@/components/beranda/MasonryGrid';
 import ProfilePrompt from '@/components/beranda/ProfilePrompt';
 import QuietDay from '@/components/beranda/QuietDay';
 import TrendingTopics from '@/components/beranda/TrendingTopics';
@@ -191,11 +192,11 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
                 <h2 className="font-mono text-xs font-bold tracking-wide text-gray-600 uppercase">
                   {dayLabel(day.date, feed.date)}
                 </h2>
-                <div className="grid gap-4 md:gap-6 laptop:grid-cols-2">
+                <MasonryGrid>
                   {day.cards.map(({ insight }) => (
                     <InsightCard key={insight.id} insight={insight} flavour={flavour} />
                   ))}
-                </div>
+                </MasonryGrid>
               </section>
             ))}
           </FeedPages>

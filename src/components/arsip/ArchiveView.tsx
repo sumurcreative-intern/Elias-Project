@@ -135,7 +135,7 @@ export default function ArchiveView({ showSampleLoader }: { showSampleLoader: bo
                   canSetPriority={canSetPriority}
                   onStatus={(status) => archive.setStatus(item.insightId, status)}
                   onPriority={(priority) => archive.setPriority(item.insightId, priority)}
-                  onNotes={(notes) => archive.setNotes(item.insightId, notes)}
+                  onNote={(notes, reaction) => archive.setNoteAndReaction(item.insightId, notes, reaction)}
                   onRemove={() => archive.remove(item.insightId)}
                   onPriorityLocked={() => setPromptOpen(true)}
                 />

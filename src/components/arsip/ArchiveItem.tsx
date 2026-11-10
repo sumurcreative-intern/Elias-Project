@@ -1,11 +1,12 @@
 'use client';
 
-import { useId, useState } from 'react';
-import { NotePencil, Trash } from '@phosphor-icons/react';
-import type { ArchivedTrend, ArchivePriority, ArchiveStatus } from '@/lib/archive';
+import { useState } from 'react';
+import { NotePencil, ThumbsDown, ThumbsUp, Trash } from '@phosphor-icons/react';
+import type { ArchivedTrend, ArchivePriority, ArchiveReaction, ArchiveStatus } from '@/lib/archive';
 import { savedOn } from '@/lib/archiveQuery';
 import { formatDate } from '@/lib/dates';
 import { sources } from '@/lib/insights/types';
+import NoteEditor from './NoteEditor';
 import PriorityControl from './PriorityControl';
 import StatusControl from './StatusControl';
 
@@ -14,7 +15,7 @@ type ArchiveItemProps = {
   canSetPriority: boolean;
   onStatus: (status: ArchiveStatus) => void;
   onPriority: (priority: ArchivePriority | null) => void;
-  onNotes: (notes: string) => void;
+  onNote: (notes: string, reaction: ArchiveReaction | null) => void;
   onRemove: () => void;
   onPriorityLocked: () => void;
 };
@@ -27,20 +28,12 @@ export default function ArchiveItem({
   canSetPriority,
   onStatus,
   onPriority,
-  onNotes,
+  onNote,
   onRemove,
   onPriorityLocked,
 }: ArchiveItemProps) {
-  const notesId = useId();
   const [editingNotes, setEditingNotes] = useState(false);
-  const [draft, setDraft] = useState(item.notes);
   const [confirmRemove, setConfirmRemove] = useState(false);
-
-  function commitNotes() {
-    const notes = draft.trim();
-    if (notes !== item.notes) onNotes(notes);
-    setEditingNotes(false);
-  }
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-5 md:p-6">
@@ -70,48 +63,27 @@ export default function ArchiveItem({
           onChange={onPriority}
           onLocked={onPriorityLocked}
         />
+        {item.reaction === 'like' && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-surface px-3 py-1.5 text-sm font-semibold text-success-strong">
+            <ThumbsUp size={16} weight="fill" aria-hidden />
+            Disukai
+          </span>
+        )}
+        {item.reaction === 'dislike' && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-error/10 px-3 py-1.5 text-sm font-semibold text-error">
+            <ThumbsDown size={16} weight="fill" aria-hidden />
+            Tidak disukai
+          </span>
+        )}
       </div>
 
-      {editingNotes ? (
-        <div className="flex flex-col gap-2">
-          <label htmlFor={notesId} className="text-xs font-medium text-gray-600">
-            Catatan
-          </label>
-          <textarea
-            id={notesId}
-            autoFocus
-            rows={3}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commitNotes}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setDraft(item.notes);
-                setEditingNotes(false);
-              }
-            }}
-            placeholder="Apa yang sudah dikerjakan, atau kenapa ditunda."
-            className="w-full resize-y rounded-lg border border-disabled-surface px-3 py-2 text-md outline-none placeholder:text-disabled-content focus:border-primary"
-          />
-        </div>
-      ) : (
-        item.notes && <p className="border-l-2 border-neutral-200 pl-3 text-md text-neutral-700">{item.notes}</p>
-      )}
+      {item.notes && <p className="border-l-2 border-neutral-200 pl-3 text-md text-neutral-700">{item.notes}</p>}
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-3">
-        {!editingNotes && (
-          <button
-            type="button"
-            onClick={() => {
-              setDraft(item.notes);
-              setEditingNotes(true);
-            }}
-            className={ghostButton}
-          >
-            <NotePencil size={18} aria-hidden />
-            {item.notes ? 'Ubah catatan' : 'Tambah catatan'}
-          </button>
-        )}
+        <button type="button" onClick={() => setEditingNotes(true)} className={ghostButton}>
+          <NotePencil size={18} aria-hidden />
+          {item.notes ? 'Ubah catatan' : 'Tambah catatan'}
+        </button>
         {confirmRemove ? (
           <div className="ml-auto flex items-center gap-1" role="group" aria-label="Konfirmasi hapus">
             <button type="button" onClick={() => setConfirmRemove(false)} className={ghostButton}>
@@ -132,6 +104,8 @@ export default function ArchiveItem({
           </button>
         )}
       </div>
+
+      {editingNotes && <NoteEditor item={item} onSave={onNote} onClose={() => setEditingNotes(false)} />}
     </article>
   );
 }
