@@ -10,7 +10,6 @@ import {
   EmailField,
   FormMessage,
   PasswordField,
-  PasswordRequirements,
   RememberRow,
   SocialOptions,
   SubmitButton,
@@ -60,15 +59,12 @@ export default function LoginForm({ initialStatus }: { initialStatus: FormStatus
 
         <div className="flex flex-col gap-2.5">
           <EmailField value={email} onChange={setEmail} hint="Gunakan email yang sesuai." />
-          <div className="flex flex-col gap-2.5 md:gap-2">
-            <PasswordField
-              value={password}
-              onChange={setPassword}
-              hint="Masukkan kata sandi kamu."
-              autoComplete="current-password"
-            />
-            <PasswordRequirements value={password} />
-          </div>
+          <PasswordField
+            value={password}
+            onChange={setPassword}
+            hint="Masukkan kata sandi kamu."
+            autoComplete="current-password"
+          />
           <RememberRow checked={remember} onChange={setRemember} />
         </div>
 

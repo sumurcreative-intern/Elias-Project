@@ -218,8 +218,8 @@ export default function ProfileForm({ initial }: { initial: ProfileAnswers | nul
           action={
             <button
               type="button"
-              aria-label="Fokus lokal: isi lokasi otomatis dari browser"
-              title="Fokus lokal"
+              aria-label="Izinkan akses lokasi: isi lokasi otomatis dari browser"
+              title="Izinkan akses lokasi"
               onClick={detectLocation}
               disabled={locating}
               className="flex shrink-0 rounded text-disabled-content transition-colors hover:text-primary disabled:cursor-wait"
@@ -244,9 +244,9 @@ export default function ProfileForm({ initial }: { initial: ProfileAnswers | nul
             />
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="font-inter text-sm font-medium text-ink-50">Fokus lokal</span>
+            <span className="font-inter text-sm font-medium text-ink-50">Izinkan akses lokasi</span>
             <span className="text-xs text-ink-30">
-              Izinkan akses lokasi pada browser agar lokasi terisi otomatis.
+              Lokasi terisi otomatis dari browser kamu.
             </span>
           </span>
         </label>
