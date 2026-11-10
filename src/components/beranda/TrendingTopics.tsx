@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { ArrowClockwise, ArrowUpRight, CircleNotch, MagnifyingGlass, WarningCircle, YoutubeLogo, type Icon } from '@phosphor-icons/react';
 import type { TrendingResponse } from '@/app/api/trending/route';
 import type { Trending } from '@/lib/insights/trending';
@@ -16,17 +18,40 @@ const quietLink = 'w-fit text-sm font-semibold text-neutral-600 underline-offset
 
 type Chip = { term: string; detail: string | null; url: string };
 
-function ChipList({ label, icon: SourceIcon, chips, empty }: { label: string; icon: Icon; chips: Chip[]; empty: string }) {
+// Mixed widths so the placeholder reads like a row of real terms
+const skeletonWidths = ['w-28', 'w-36', 'w-24', 'w-32', 'w-20', 'w-40', 'w-28', 'w-24'];
+
+/** Placeholder pills, sized like a chip, with a shimmer GSAP sweeps across. */
+function ChipSkeleton() {
+  return (
+    <ul aria-hidden className="flex flex-wrap gap-2">
+      {skeletonWidths.map((width, i) => (
+        <li key={i} data-skeleton className={`relative h-[34px] overflow-hidden rounded-full bg-neutral-200 ${width}`}>
+          <span
+            data-shimmer
+            className="absolute inset-y-0 -left-full w-full bg-linear-to-r from-transparent via-white/70 to-transparent"
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type ChipListProps = { label: string; icon: Icon; chips: Chip[]; empty: string; loading: boolean };
+
+function ChipList({ label, icon: SourceIcon, chips, empty, loading }: ChipListProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className={`flex items-center gap-1.5 ${monoLabel}`}>
         <SourceIcon size={14} aria-hidden />
         {label}
       </p>
-      {chips.length ? (
+      {loading ? (
+        <ChipSkeleton />
+      ) : chips.length ? (
         <ul className="flex flex-wrap gap-2">
           {chips.map((item) => (
-            <li key={item.term}>
+            <li key={item.term} data-chip>
               <a href={item.url} target="_blank" rel="noopener noreferrer" className={chip}>
                 <span className="font-semibold">{item.term}</span>
                 {item.detail && <span className="text-gray-600">· {item.detail}</span>}
@@ -64,7 +89,47 @@ type TrendingTopicsProps = {
 export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsProps) {
   const [trending, setTrending] = useState(initial);
   const [state, setState] = useState<State>({ kind: 'idle' });
+  const scope = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
   const { searches, topics, brand } = trending;
+  const loading = state.kind === 'loading';
+
+  // Loading: the skeleton pops in and shimmers. Done: the fetched chips fade
+  // up in place of it. The first render is left to AppShell's page reveal
+  useGSAP(
+    () => {
+      if (firstRender.current) {
+        firstRender.current = false;
+        return;
+      }
+      const mm = gsap.matchMedia();
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        if (loading) {
+          gsap.fromTo(
+            '[data-skeleton]',
+            { autoAlpha: 0, scale: 0.94 },
+            { autoAlpha: 1, scale: 1, duration: 0.3, stagger: 0.03, ease: 'power2.out' },
+          );
+          // Each pill loops on its own, offset from its neighbours, so the sweep ripples along the row
+          gsap.to('[data-shimmer]', {
+            xPercent: 200,
+            duration: 1.1,
+            ease: 'power1.inOut',
+            stagger: { each: 0.08, repeat: -1, repeatDelay: 0.4 },
+          });
+        } else {
+          gsap.fromTo(
+            '[data-chip]',
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.35, stagger: 0.025, ease: 'power2.out' },
+          );
+        }
+      });
+      return () => mm.revert();
+    },
+    { scope, dependencies: [loading] },
+  );
+
   if (!searches.length && !topics.length && !brandLabel) return null;
 
   async function refresh() {
@@ -85,8 +150,6 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
       setState({ kind: 'error', message: result.error.message, signedOut: status === 401 });
     }
   }
-
-  const loading = state.kind === 'loading';
 
   return (
     <section
@@ -135,8 +198,14 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
         </div>
       )}
 
-      <div className={`grid gap-5 transition-opacity laptop:grid-cols-2 ${loading ? 'opacity-60' : ''}`}>
+      <div ref={scope} aria-busy={loading} className="grid gap-5 laptop:grid-cols-2">
+        {loading && (
+          <p role="status" className="sr-only">
+            Mengambil tren terbaru…
+          </p>
+        )}
         <ChipList
+          loading={loading}
           label={brand ? 'Dicari di Google · semua kategori · 24 jam' : 'Dicari di Google · 24 jam'}
           icon={MagnifyingGlass}
           empty="Belum ada pencarian yang tercatat dalam 24 jam terakhir."
@@ -153,6 +222,7 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
           }))}
         />
         <ChipList
+          loading={loading}
           label={brand ? `Topik berulang di YouTube · ${brand}` : 'Topik berulang di YouTube · hari ini'}
           icon={YoutubeLogo}
           empty={
