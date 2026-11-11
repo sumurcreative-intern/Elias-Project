@@ -87,6 +87,11 @@
   button:not(:disabled) {
     cursor: pointer;
   }
+
+  /* Emphasis inside body copy: the app's semibold, not the browser's bolder */
+  strong {
+    @apply font-semibold;
+  }
 }
 
 @layer components {
@@ -99,7 +104,27 @@
 
 /* Hide animated elements until GSAP reveals them (skipped for reduced motion) */
 @media (prefers-reduced-motion: no-preference) {
-  [data-animate] {
+  [data-animate],
+  [data-animate='scroll'] [data-reveal],
+  [data-split] [data-word] {
     visibility: hidden;
+  }
+}
+
+/* MotionText's typing caret, on the newest word; absolute so it never shifts the line */
+[data-caret]::after {
+  content: '';
+  position: absolute;
+  top: 0.1em;
+  right: -0.2em;
+  width: 2px;
+  height: 0.9em;
+  background: currentColor;
+  animation: caret-blink 0.8s steps(1) infinite;
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
   }
 }

@@ -88,7 +88,7 @@ export default function SignupForm() {
 
         <div data-animate="form-item" className="flex flex-col gap-2.5">
           <h1 className="text-display-md font-bold">Buat akun Elias</h1>
-          <p className="text-md md:text-xl">Satu akun untuk profil brand, Arsip, dan email pagi kamu.</p>
+          <p className="text-md md:text-xl">Satu akun untuk <strong>profil brand, Arsip, dan email pagi</strong> kamu.</p>
         </div>
 
         <div className="flex flex-col gap-2.5">

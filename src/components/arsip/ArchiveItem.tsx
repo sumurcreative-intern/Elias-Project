@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { NotePencil, ThumbsDown, ThumbsUp, Trash } from '@phosphor-icons/react';
+import { NotePencil, Trash } from '@phosphor-icons/react';
 import type { ArchivedTrend, ArchivePriority, ArchiveReaction, ArchiveStatus } from '@/lib/archive';
 import { savedOn } from '@/lib/archiveQuery';
 import { formatDate } from '@/lib/dates';
 import { sources } from '@/lib/insights/types';
+import NoteBox from './NoteBox';
 import NoteEditor from './NoteEditor';
 import PriorityControl from './PriorityControl';
 import StatusControl from './StatusControl';
@@ -63,21 +64,9 @@ export default function ArchiveItem({
           onChange={onPriority}
           onLocked={onPriorityLocked}
         />
-        {item.reaction === 'like' && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-surface px-3 py-1.5 text-sm font-semibold text-success-strong">
-            <ThumbsUp size={16} weight="fill" aria-hidden />
-            Disukai
-          </span>
-        )}
-        {item.reaction === 'dislike' && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-error/10 px-3 py-1.5 text-sm font-semibold text-error">
-            <ThumbsDown size={16} weight="fill" aria-hidden />
-            Tidak disukai
-          </span>
-        )}
       </div>
 
-      {item.notes && <p className="border-l-2 border-neutral-200 pl-3 text-md text-neutral-700">{item.notes}</p>}
+      {(item.notes || item.reaction) && <NoteBox notes={item.notes} reaction={item.reaction ?? null} />}
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-3">
         <button type="button" onClick={() => setEditingNotes(true)} className={ghostButton}>

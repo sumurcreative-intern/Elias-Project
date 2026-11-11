@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       minimalHeader
       hero={{
         headline: ['IDE NGGAK', 'NUNGGU', 'MOOD.'],
-        body: 'Elias membaca Trends dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan brand dan peran kamu.',
+        body: <>Elias membaca Trends dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan <strong>brand dan peran kamu</strong>.</>,
         angle: '215.67deg',
       }}
     >

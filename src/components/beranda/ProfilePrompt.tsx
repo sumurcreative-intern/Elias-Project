@@ -10,7 +10,7 @@ export default function ProfilePrompt() {
       <div className="flex flex-col gap-1">
         <p className="text-lg font-semibold">Feed ini generik: tanpa peran, tanpa archetype.</p>
         <p className="text-md text-txt-white/70">
-          Buat profil brand, dan setiap kartu memberi satu tindakan yang spesifik untuk peran kamu.
+          Buat profil brand, dan setiap kartu memberi <strong className="text-txt-white">satu tindakan yang spesifik</strong> untuk peran kamu.
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-4">

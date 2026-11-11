@@ -26,7 +26,7 @@ export default async function OnboardingSurveyPage() {
     <AuthLayout
       hero={{
         headline: ['PAGI KAMU,', 'KEPALA', 'JENIUS'],
-        body: 'Elias membaca tren dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan brand dan peran kamu.',
+        body: <>Elias membaca tren dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan <strong>brand dan peran kamu</strong>.</>,
         angle: '216.34deg',
         children: <StepList flow={onboardingFlow} current={3} />,
       }}

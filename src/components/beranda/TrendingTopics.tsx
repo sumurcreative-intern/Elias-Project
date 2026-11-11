@@ -7,6 +7,7 @@ import { useGSAP } from '@gsap/react';
 import { ArrowClockwise, ArrowUpRight, CircleNotch, MagnifyingGlass, WarningCircle, YoutubeLogo, type Icon } from '@phosphor-icons/react';
 import type { TrendingResponse } from '@/app/api/trending/route';
 import type { Trending } from '@/lib/insights/trending';
+import MotionText from '../motion/MotionText';
 
 const monoLabel = 'font-mono text-xs font-bold tracking-wide text-gray-600 uppercase';
 const chip =
@@ -159,9 +160,14 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-1">
-          <h2 id="trending-topics" className="text-lg font-semibold">
-            {brand ? `Lagi ramai untuk ${brand}` : 'Lagi ramai hari ini'}
-          </h2>
+          <MotionText
+            as="h2"
+            id="trending-topics"
+            effect="type"
+            delay={0.3}
+            text={brand ? `Lagi ramai untuk ${brand}` : 'Lagi ramai hari ini'}
+            className="text-lg font-semibold"
+          />
           <p aria-live="polite" className="text-sm text-neutral-600">
             {brand
               ? `Diambil ${wibTime(trending.readAt)} WIB dari chart YouTube kategori ${brand} dan pencarian Google terbaru. Belum dipilih Elias.`

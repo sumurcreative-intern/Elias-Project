@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { ThumbsDown, ThumbsUp, X, type Icon } from '@phosphor-icons/react';
+import { TextB, ThumbsDown, ThumbsUp, X, type Icon } from '@phosphor-icons/react';
 import type { ArchivedTrend, ArchiveReaction } from '@/lib/archive';
 
 const reactions: { value: ArchiveReaction; label: string; icon: Icon; active: string }[] = [
@@ -23,6 +23,8 @@ export default function NoteEditor({ item, onSave, onClose }: NoteEditorProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const notesId = useId();
+  const hintId = useId();
+  const textarea = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState(item.notes);
   const [reaction, setReaction] = useState<ArchiveReaction | null>(item.reaction ?? null);
   const dirty = draft.trim() !== item.notes || reaction !== (item.reaction ?? null);
@@ -30,6 +32,28 @@ export default function NoteEditor({ item, onSave, onClose }: NoteEditorProps) {
   useEffect(() => {
     ref.current?.showModal();
   }, []);
+
+  // Wraps the selection in **, which NoteBox shows bold; unwraps it if already bold
+  function toggleBold() {
+    const field = textarea.current;
+    if (!field) return;
+    const { selectionStart: start, selectionEnd: end } = field;
+    const before = draft.slice(0, start);
+    const selected = draft.slice(start, end);
+    const after = draft.slice(end);
+    const wrapped = before.endsWith('**') && after.startsWith('**');
+    const next = wrapped
+      ? before.slice(0, -2) + selected + after.slice(2)
+      : `${before}**${selected || 'teks tebal'}**${after}`;
+    const from = wrapped ? start - 2 : start + 2;
+    const to = from + (selected || (wrapped ? '' : 'teks tebal')).length;
+    setDraft(next);
+    // After React writes the new value, so the selection lands on it
+    requestAnimationFrame(() => {
+      field.focus();
+      field.setSelectionRange(from, to);
+    });
+  }
 
   function save() {
     if (dirty) onSave(draft.trim(), reaction);
@@ -72,11 +96,24 @@ export default function NoteEditor({ item, onSave, onClose }: NoteEditorProps) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor={notesId} className="text-sm font-medium text-gray-600">
-            Catatan
-          </label>
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor={notesId} className="text-sm font-medium text-gray-600">
+              Catatan
+            </label>
+            <button
+              type="button"
+              onClick={toggleBold}
+              aria-label="Tebalkan teks terpilih"
+              title="Tebalkan (Ctrl+B)"
+              className="rounded-md p-1.5 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-txt-black"
+            >
+              <TextB size={18} weight="bold" aria-hidden />
+            </button>
+          </div>
           <textarea
+            ref={textarea}
             id={notesId}
+            aria-describedby={hintId}
             autoFocus
             rows={5}
             value={draft}
@@ -85,11 +122,17 @@ export default function NoteEditor({ item, onSave, onClose }: NoteEditorProps) {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
                 save();
+              } else if (e.key.toLowerCase() === 'b' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                toggleBold();
               }
             }}
             placeholder="Apa yang sudah dikerjakan, atau kenapa ditunda."
             className="w-full resize-y rounded-lg border border-disabled-surface px-3 py-2 text-md outline-none placeholder:text-disabled-content focus:border-primary"
           />
+          <p id={hintId} className="text-xs text-gray-600">
+            Tulis <code className="font-mono">**teks**</code> atau tekan <strong>Ctrl+B</strong> untuk menebalkan poin penting.
+          </p>
         </div>
 
         <fieldset className="flex flex-col gap-2">

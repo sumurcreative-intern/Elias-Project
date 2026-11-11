@@ -160,7 +160,7 @@ export default function GoalsForm({ initial }: { initial: GoalsAnswers | null })
           })}
         </div>
         <p id={hintId} data-animate="form-item" className="text-xs text-disabled-content">
-          Pilih satu atau lebih. Hanya satu yang menjadi prioritas utama, ditandai bintang.
+          Pilih satu atau lebih. Hanya <strong>satu yang menjadi prioritas utama</strong>, ditandai bintang.
         </p>
       </fieldset>
 

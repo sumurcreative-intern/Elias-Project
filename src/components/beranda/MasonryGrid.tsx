@@ -20,7 +20,7 @@ export default function MasonryGrid({ children }: { children: ReactNode }) {
   const [measured, setMeasured] = useState(false);
 
   // Runs after every render, so cards from a new page are measured too.
-  // Before paint, and AppShell keeps cards hidden until its reveal, so the
+  // Before paint, and cards stay hidden until ScrollReveal shows them, so the
   // switch from plain grid to packed grid is never seen
   useLayoutEffect(() => {
     const items = Array.from(grid.current?.children ?? []) as HTMLElement[];

@@ -10,6 +10,7 @@ import ArchiveFilters from './ArchiveFilters';
 import ArchiveItem from './ArchiveItem';
 import Pagination from './Pagination';
 import { StatusIcon } from './StatusControl';
+import MotionText from '../motion/MotionText';
 
 const noop = () => () => {};
 
@@ -56,11 +57,15 @@ export default function ArchiveView({ showSampleLoader }: { showSampleLoader: bo
       <section className="flex flex-col gap-3">
         <p className="font-mono text-xs font-bold tracking-wide text-gray-600 uppercase">Arsip</p>
         {/* Opens with the execution count, Elias's primary metric (Ch. 5) */}
-        <h1 className="max-w-4xl text-2xl font-bold md:text-display-sm laptop:text-display-md">
-          {!hydrated ? ' ' : empty ? 'Belum ada tren tersimpan.' : `${executed} dari ${items.length} tren sudah dieksekusi.`}
-        </h1>
+        <MotionText
+          as="h1"
+          effect="blur"
+          delay={0.2}
+          text={!hydrated ? ' ' : empty ? 'Belum ada tren tersimpan.' : `${executed} dari ${items.length} tren sudah dieksekusi.`}
+          className="max-w-4xl text-2xl font-bold md:text-display-sm laptop:text-display-md"
+        />
         {empty ? (
-          <p className="text-md text-neutral-600">Kembali ke Beranda dan simpan satu yang layak ditindaklanjuti.</p>
+          <p className="text-md text-neutral-600">Kembali ke Beranda dan simpan <strong>satu yang layak ditindaklanjuti</strong>.</p>
         ) : (
           hydrated && (
             <ul aria-label="Jumlah per status" className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-neutral-700">
@@ -75,7 +80,7 @@ export default function ArchiveView({ showSampleLoader }: { showSampleLoader: bo
         )}
         {!canSetPriority && hydrated && (
           <p className="text-sm text-gray-600">
-            Arsip ini tersimpan di perangkat ini saja. Prioritas tersedia untuk pemilik akun.{' '}
+            Arsip ini tersimpan <strong>di perangkat ini saja</strong>. Prioritas tersedia untuk pemilik akun.{' '}
             <Link href="/signup" className="font-semibold text-txt-black underline underline-offset-2">
               Buat akun
             </Link>
@@ -111,13 +116,21 @@ export default function ArchiveView({ showSampleLoader }: { showSampleLoader: bo
       {hydrated && items.length > 0 && (
         <div ref={listRef} className="flex scroll-mt-28 flex-col gap-4 md:gap-6">
           <p aria-live="polite" className="text-sm text-gray-600">
-            {result.total > 0 ? `Menampilkan ${result.first}–${result.last} dari ${result.total} tren` : ''}
+            {result.total > 0 && (
+              <>
+                Menampilkan{' '}
+                <strong>
+                  {result.first}–{result.last}
+                </strong>{' '}
+                dari <strong>{result.total}</strong> tren
+              </>
+            )}
           </p>
 
           {result.total === 0 ? (
             <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-disabled-surface p-6 md:p-10">
               <p className="text-xl font-semibold">Tidak ada tren yang cocok dengan filter ini.</p>
-              <p className="text-md text-neutral-600">Hapus satu filter atau ubah kata kunci untuk memperluas hasil.</p>
+              <p className="text-md text-neutral-600"><strong>Hapus satu filter</strong> atau <strong>ubah kata kunci</strong> untuk memperluas hasil.</p>
               <button
                 type="button"
                 onClick={() => changeFilters(noFilters)}

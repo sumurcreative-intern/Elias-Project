@@ -1,4 +1,5 @@
 import { daysBefore } from '../dates';
+import { detached } from '../detached';
 import { fetchSearchTrends, type SearchNews, type SearchTrend } from '../googleTrends';
 import { createAdminClient } from '../supabase/admin';
 
@@ -80,7 +81,8 @@ export function captureSearchTrends(date: string, minIntervalMs = CAPTURE_INTERV
   if (state.pending) return state.pending;
   if (Date.now() - state.lastAt < minIntervalMs) return Promise.resolve([]);
   state.lastAt = Date.now();
-  state.pending = capture(date).finally(() => (state.pending = null));
+  // Detached: the daily cycle may join a capture another request started
+  state.pending = detached(() => capture(date)).finally(() => (state.pending = null));
   return state.pending;
 }
 

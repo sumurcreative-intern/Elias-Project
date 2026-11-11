@@ -22,9 +22,10 @@ const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 // found", 10 Nov 2026) and landed on openrouter/free, which picked 2B models
 // that wrote generic answers. Fastest first; Nemotron is the most specific
 // but often takes over a minute. No openrouter/free catch-all: a clear
-// "busy, try again" beats a confident generic call
+// "busy, try again" beats a confident generic call. xing4.0 was delisted by
+// 11 Nov 2026; ERNIE flash took its place
 const DEFAULT_MODELS = [
-  'xingchen-agi/xing4.0-29b-a4b:free',
+  'baidu/ernie-5.5-flash-preview:free',
   'nvidia/nemotron-3.5-super-vl:free',
   'dots-studio/dots-3-note-preview:free',
 ];

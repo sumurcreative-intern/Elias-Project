@@ -7,6 +7,7 @@ import FeedPages from '@/components/beranda/FeedPages';
 import FeedScope from '@/components/beranda/FeedScope';
 import InsightCard, { type Flavour } from '@/components/beranda/InsightCard';
 import MasonryGrid from '@/components/beranda/MasonryGrid';
+import MotionText from '@/components/motion/MotionText';
 import ProfilePrompt from '@/components/beranda/ProfilePrompt';
 import QuietDay from '@/components/beranda/QuietDay';
 import TrendingTopics from '@/components/beranda/TrendingTopics';
@@ -113,15 +114,15 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
   const todayNote = !insights.length
     ? null
     : brand && !wantsAll && !brandCards.length
-      ? `Belum ada tren yang cocok untuk brand ${brand.label} dalam 5 hari terakhir, jadi semua tren ditampilkan.`
+      ? <>Belum ada tren yang cocok untuk brand <strong>{brand.label}</strong> dalam 5 hari terakhir, jadi <strong>semua tren ditampilkan</strong>.</>
       : todayCount
         ? null
         : scoped && allCards.some(isToday)
-          ? `Hari ini belum ada tren yang cocok untuk brand ${brand?.label}. Kartu di bawah dari hari-hari sebelumnya; tren lain hari ini ada di Semua.`
+          ? <>Hari ini belum ada tren yang cocok untuk brand <strong>{brand?.label}</strong>. Kartu di bawah dari hari-hari sebelumnya; tren lain hari ini ada di <strong>Semua</strong>.</>
           : // Today has nothing to add, but the days before still do
             feed.status === 'unavailable'
-            ? 'Siklus hari ini belum tersedia, Elias mencoba lagi dalam beberapa menit. Kartu di bawah dari hari-hari sebelumnya.'
-            : 'Hari ini tidak ada pergerakan baru yang layak ditindaklanjuti. Kartu di bawah dari hari-hari sebelumnya.';
+            ? <><strong>Siklus hari ini belum tersedia</strong>, Elias mencoba lagi dalam beberapa menit. Kartu di bawah dari hari-hari sebelumnya.</>
+            : <>Hari ini <strong>tidak ada pergerakan baru</strong> yang layak ditindaklanjuti. Kartu di bawah dari hari-hari sebelumnya.</>;
 
   const market = targetMarketLabel(profile?.target_market);
   const context = flavour && [
@@ -134,18 +135,28 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
     <AppShell userId={user?.id ?? null}>
       <div className="flex flex-col gap-8 md:gap-10">
         <section data-animate="page-item" className="flex flex-col gap-3">
-          <p className="font-mono text-xs font-bold tracking-wide text-gray-600 uppercase">
-            Siklus {formatDate(feed.date, { weekday: 'long' })} · {feed.time} WIB
-          </p>
-          <h1 className="max-w-4xl text-2xl font-bold md:text-display-sm laptop:text-display-md">
-            {insights.length
-              ? headline(insights, todayCount, scoped ? brand?.label : undefined)
-              : feed.status === 'unavailable'
-                ? 'Feed hari ini belum tersedia.'
-                : 'Hari ini sepi.'}
-          </h1>
+          <MotionText
+            as="p"
+            effect="type"
+            delay={0.1}
+            text={`Siklus ${formatDate(feed.date, { weekday: 'long' })} · ${feed.time} WIB`}
+            className="font-mono text-xs font-bold tracking-wide text-gray-600 uppercase"
+          />
+          <MotionText
+            as="h1"
+            effect="blur"
+            delay={0.25}
+            text={
+              insights.length
+                ? headline(insights, todayCount, scoped ? brand?.label : undefined)
+                : feed.status === 'unavailable'
+                  ? 'Feed hari ini belum tersedia.'
+                  : 'Hari ini sepi.'
+            }
+            className="max-w-4xl text-2xl font-bold md:text-display-sm laptop:text-display-md"
+          />
           <p className="text-md text-neutral-600">
-            Kartu dari 5 hari terakhir; yang lebih lama dihapus otomatis. Siklus berikutnya {nextCycle}.
+            Kartu dari <strong>5 hari terakhir</strong>; yang lebih lama dihapus otomatis. Siklus berikutnya <strong>{nextCycle}</strong>.
           </p>
           {context && context.length > 0 && (
             <ul aria-label="Disesuaikan untuk" className="flex flex-wrap gap-2 pt-1">
@@ -189,9 +200,12 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
           >
             {groupByDay(shown.items).map((day) => (
               <section key={day.date} aria-label={dayLabel(day.date, feed.date)} className="flex flex-col gap-4">
-                <h2 className="font-mono text-xs font-bold tracking-wide text-gray-600 uppercase">
-                  {dayLabel(day.date, feed.date)}
-                </h2>
+                <MotionText
+                  as="h2"
+                  effect="type"
+                  text={dayLabel(day.date, feed.date)}
+                  className="font-mono text-xs font-bold tracking-wide text-gray-600 uppercase"
+                />
                 <MasonryGrid>
                   {day.cards.map(({ insight }) => (
                     <InsightCard key={insight.id} insight={insight} flavour={flavour} />

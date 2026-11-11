@@ -94,7 +94,7 @@ export default function VerifyCodeForm() {
           </SubmitButton>
           <p data-animate="form-item" className="text-center text-sm text-txt-black md:text-md" aria-live="polite">
             {secondsLeft > 0 ? (
-              <>Kirim ulang kode aktif dalam {secondsLeft} detik</>
+              <>Kirim ulang kode aktif dalam <strong>{secondsLeft} detik</strong></>
             ) : (
               <button type="button" onClick={resend} className="font-semibold text-primary hover:underline">
                 Kirim ulang kode

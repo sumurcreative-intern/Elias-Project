@@ -39,7 +39,7 @@ export default function AccountPrompt({ open, onClose }: { open: boolean; onClos
           </button>
         </div>
         <p className="text-md text-neutral-600">
-          Buat akun untuk menandai tren mana yang dikerjakan lebih dulu dan mengurutkan Arsip berdasarkan prioritas.
+          Buat akun untuk <strong>menandai tren mana yang dikerjakan lebih dulu</strong> dan mengurutkan Arsip berdasarkan prioritas.
         </p>
         <div className="flex items-center justify-end gap-4">
           <Link href="/login" className="text-sm font-medium text-gray-600 transition-colors hover:text-txt-black">

@@ -1,6 +1,7 @@
 import { brandCategories, brandCategoryLabels, isBrandCategory } from '../brandCategories';
 import { creativeRoleFocus, creativeRoleLabels, type CreativeRole } from '../creativeRoles';
 import { formatDate, todayInJakarta } from '../dates';
+import { detached } from '../detached';
 import { modelsFrom, requestCompletion } from '../elias/openrouter';
 import { cleanCopy, extractJson, isRecord, nonEmpty, parseVerdict } from '../elias/parse';
 import { fetchIndonesiaHeadlines, type NewsContext } from '../gdelt';
@@ -38,6 +39,10 @@ const MAX_EVIDENCE = 5;
 // A failed cycle is retried at most this often, so a broken source can't
 // drain the 50-a-day OpenRouter quota one page view at a time
 const RETRY_AFTER_FAILURE_MS = 10 * 60_000;
+// Every call has its own timeout, together under six minutes (sources 10s,
+// trends 210s, roles 120s). This cap holds even when one never settles: a
+// cycle hung on 11 Nov 2026 and kept the first visitors waiting for an hour
+const CYCLE_DEADLINE_MS = 6 * 60_000;
 
 // The general chart is mostly music and kids' gaming; category charts carry
 // the signals brands can use. Every chart Indonesia serves, as checked on
@@ -97,14 +102,16 @@ const categories = [
 
 const roles = Object.keys(creativeRoleLabels) as CreativeRole[];
 
-// Gemma's free pool is often rate-limited upstream (seen on 2 Nov 2026), and
-// openrouter/free can land on a small coding model that ignores the rules, so
-// a large general model sits in between. OPENROUTER_CYCLE_MODELS overrides it
+// Free models with strict json_schema only, as for the analysis (../elias/openrouter).
+// Gemma lists plain JSON mode only, so require_parameters skipped it on every
+// cycle and each one landed on Nemotron, which took 135s and then spent all its
+// tokens thinking (finish_reason "length", 11 Nov 2026). Fastest first,
+// Nemotron last. OPENROUTER_CYCLE_MODELS overrides it
 function cycleModels(): string[] {
   return modelsFrom(process.env.OPENROUTER_CYCLE_MODELS, [
-    'google/gemma-4-31b-it:free',
+    'baidu/ernie-5.5-flash-preview:free',
+    'dots-studio/dots-3-note-preview:free',
     'nvidia/nemotron-3.5-super-vl:free',
-    'openrouter/free',
   ]);
 }
 
@@ -539,6 +546,9 @@ type Generated = { date: string; insights: Insight[] | null; retryAt: number };
  */
 async function generate(date: string): Promise<Generated> {
   const failed: Generated = { date, insights: null, retryAt: Date.now() + RETRY_AFTER_FAILURE_MS };
+  // Each step's time, so a slow or stuck cycle shows where it stopped
+  const started = Date.now();
+  const step = (name: string) => console.info('Daily cycle:', name, `${((Date.now() - started) / 1000).toFixed(1)}s`);
   const [news, media, reddit, googleSearches, previous, searches, ...trends] = await Promise.all([
     fetchIndonesiaHeadlines(),
     fetchMediaNews(),
@@ -548,9 +558,11 @@ async function generate(date: string): Promise<Generated> {
     categorySearchTrends(date, REGION),
     ...charts.map((chart) => fetchYouTubeTrends(REGION, CHART_SIZE, chart.categoryId)),
   ]);
+  step('sources answered');
   const chartTrends = [...trends.map((list, i) => ({ chart: charts[i].categoryId ?? 'all', trends: list })), ...searches];
   // Stored before the model runs, so a failed cycle still keeps today's charts and searches
   await saveSnapshot(date, chartTrends);
+  step('charts stored');
   const youtube = youtubeItems(chartTrends, previous);
   const items = [
     ...youtube.items,
@@ -573,11 +585,13 @@ async function generate(date: string): Promise<Generated> {
     ],
     schemaName: 'elias_daily_trends',
     schema: trendsSchema,
-    // A reasoning fallback (openrouter/free) thinks before it writes. Free
+    // Every strict-JSON free model thinks before it writes, and at 16,000 both
+    // Nemotron and ERNIE spent it all and returned nothing (11 Nov 2026). Free
     // models bill per request, so the headroom costs nothing
-    maxTokens: 16_000,
-    timeoutMs: 150_000,
+    maxTokens: 32_000,
+    timeoutMs: 210_000,
   });
+  step('trends answered');
   if (!completion.ok) {
     console.error('Daily cycle: OpenRouter failed', completion.status, completion.error.code);
     return failed;
@@ -595,6 +609,7 @@ async function generate(date: string): Promise<Generated> {
   }
 
   const perRole = drafts.length ? await Promise.all(roles.map((role) => recommendationsFor(role, drafts))) : [];
+  step('roles answered');
   const insights = drafts.map((draft, i) => ({
     ...draft,
     recommendations: Object.fromEntries(
@@ -624,17 +639,42 @@ async function generate(date: string): Promise<Generated> {
 // cards when they could not be saved. On globalThis so dev-server reloads
 // don't regenerate the cycle (and spend quota) on every save
 const store = globalThis as typeof globalThis & {
-  eliasCycle?: { latest: Generated | null; pending: Promise<Generated> | null };
+  eliasCycle?: { latest: Generated | null; pending: Promise<Generated> | null; startedAt?: number };
 };
 store.eliasCycle ??= { latest: null, pending: null };
 const state = store.eliasCycle;
 
+/** The cycle, or a failed one once CYCLE_DEADLINE_MS passes, so no visitor waits on it forever. */
+function withDeadline(cycle: Promise<Generated>, date: string): Promise<Generated> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<Generated>((resolve) => {
+    timer = setTimeout(() => {
+      console.error('Daily cycle: no answer within', `${CYCLE_DEADLINE_MS / 1000}s`, 'so it counts as failed');
+      resolve({ date, insights: null, retryAt: Date.now() + RETRY_AFTER_FAILURE_MS });
+    }, CYCLE_DEADLINE_MS);
+  });
+  return Promise.race([cycle, expired]).finally(() => clearTimeout(timer));
+}
+
 async function todaysCards(date: string): Promise<Insight[] | null> {
   const { latest } = state;
   if (latest?.date === date && (latest.insights || Date.now() < latest.retryAt)) return latest.insights;
-  state.pending ??= generate(date)
-    .then((result) => (state.latest = result))
-    .finally(() => (state.pending = null));
+  // The store outlives dev reloads, so a cycle started before the deadline
+  // existed (no startedAt) could otherwise hold every visitor until a restart
+  if (state.pending && !(Date.now() - (state.startedAt ?? 0) < CYCLE_DEADLINE_MS)) {
+    console.error('Daily cycle: dropping a stuck cycle and starting again');
+    state.pending = null;
+  }
+  if (!state.pending) {
+    // Detached: every visitor waits on this, not only the one who started it
+    const pending = withDeadline(detached(() => generate(date)), date)
+      .then((result) => (state.latest = result))
+      .finally(() => {
+        if (state.pending === pending) state.pending = null;
+      });
+    state.pending = pending;
+    state.startedAt = Date.now();
+  }
   return (await state.pending).insights;
 }
 

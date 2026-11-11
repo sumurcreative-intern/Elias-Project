@@ -4,7 +4,7 @@ import Logo from './Logo';
 type HeroPanelProps = {
   /** Headline split into the lines it wraps to in the design */
   headline: string[];
-  body: string;
+  body: ReactNode;
   /** Gradient angle differs slightly between pages in the design */
   angle: string;
   children?: ReactNode;

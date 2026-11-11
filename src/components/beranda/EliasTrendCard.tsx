@@ -211,7 +211,7 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
 
       {state.kind === 'idle' && (
         <>
-          <p className="text-sm text-paper/70">So what untuk peran kamu, satu action brief yang bisa dikerjakan hari ini, plus saran copy sesuai tone brand.</p>
+          <p className="text-sm text-paper/70">So what untuk peran kamu, <strong className="text-paper">satu action brief yang bisa dikerjakan hari ini</strong>, plus saran copy sesuai tone brand.</p>
           <button type="button" onClick={analyse} className={primaryCta}>
             <Lightning size={18} weight="fill" aria-hidden />
             Analisis untuk brand ini
@@ -268,7 +268,7 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
           <div className="flex flex-col gap-2">
             <p className={sectionLabel}>Make it today</p>
             {state.result.decision === 'skip' ? (
-              <p className="text-md text-paper/90">Tidak ada yang perlu diproduksi untuk tren ini. Waktu kamu lebih berharga di tempat lain.</p>
+              <p className="text-md text-paper/90"><strong className="text-paper">Tidak ada yang perlu diproduksi</strong> untuk tren ini. Waktu kamu lebih berharga di tempat lain.</p>
             ) : (
               <>
                 <p className="text-md">
