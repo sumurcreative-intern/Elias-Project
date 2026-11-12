@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react';
 import { ArchiveProvider } from '@/lib/archive';
 import Footer from '../Footer';
 import AppHeader from './AppHeader';
+import { afterPageReveal } from '../motion/pageCover';
 
 gsap.registerPlugin(useGSAP);
 
@@ -21,8 +22,8 @@ export default function AppShell({ userId, children }: { userId: string | null; 
     () => {
       const mm = gsap.matchMedia();
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        gsap
-          .timeline({ defaults: { ease: 'power3.out' } })
+        const timeline = gsap
+          .timeline({ paused: true, defaults: { ease: 'power3.out' } })
           .fromTo('[data-animate="header"]', { autoAlpha: 0, y: -16 }, { autoAlpha: 1, y: 0, duration: 0.6 })
           .fromTo(
             '[data-animate="page-item"]',
@@ -31,6 +32,8 @@ export default function AppShell({ userId, children }: { userId: string | null; 
             '<0.1',
           )
           .fromTo('[data-animate="footer"]', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6 }, '-=0.3');
+        // After a page turn, rise in behind the lifting blob
+        return afterPageReveal(() => timeline.play());
       });
       return () => mm.revert();
     },

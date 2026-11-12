@@ -15,6 +15,7 @@ import {
   SubmitButton,
   type FormStatus,
 } from './auth/fields';
+import { turnPageTo } from './motion/pageCover';
 
 export default function LoginForm({ initialStatus }: { initialStatus: FormStatus }) {
   const router = useRouter();
@@ -39,9 +40,10 @@ export default function LoginForm({ initialStatus }: { initialStatus: FormStatus
       setStatus({ tone: 'error', text: errorMessage(error) });
       return;
     }
-    // The proxy sends users with unfinished onboarding to the step they stopped at
+    // The proxy sends users with unfinished onboarding to the step they stopped at.
+    // Refreshing drops cached pages rendered while signed out, which still show Daftar/Masuk
+    if (turnPageTo('/', { refresh: true })) return;
     router.push('/');
-    // Drop any cached pages rendered while signed out, which still show Daftar/Masuk
     router.refresh();
   }
 

@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { afterPageReveal } from './motion/pageCover';
 
 gsap.registerPlugin(useGSAP);
 
@@ -23,7 +24,7 @@ export default function AuthAnimations({ className, children }: AuthAnimationsPr
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+        const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
 
         tl.fromTo('[data-animate="header"]', { autoAlpha: 0, y: -16 }, { autoAlpha: 1, y: 0, duration: 0.6 });
 
@@ -59,6 +60,9 @@ export default function AuthAnimations({ className, children }: AuthAnimationsPr
             0.4,
           );
         }
+
+        // After a page turn, rise in behind the lifting blob
+        return afterPageReveal(() => tl.play());
       });
 
       return () => mm.revert();

@@ -12,6 +12,9 @@
   --color-primary-border: #f79289;
   /* Deep Ember: hover for primary actions and secondary accents */
   --color-ember: #c41e28;
+  /* Brand/Gradient/Spark: primary → spark-via (50%) → spark-to */
+  --color-spark-via: #e2335f;
+  --color-spark-to: #3a3961;
 
   --color-disabled-surface: #cdcbc7;
   --color-disabled-content: #666465;
@@ -70,6 +73,9 @@
   --text-display-md: 36px;
   --text-display-md--line-height: 44px;
   --text-display-md--letter-spacing: -0.72px;
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 60px;
+  --text-display-lg--letter-spacing: -0.96px;
   --text-display-3xl: 80px;
   --text-display-3xl--line-height: 70px;
 

@@ -1,3 +1,5 @@
+import { afterPageReveal, OVER_HOLD } from './pageCover';
+
 export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
@@ -16,8 +18,13 @@ export function onceInView(element: Element, play: () => void): () => void {
     // Starts a little before the bottom edge, so the motion is seen, not missed
     { rootMargin: '0px 0px -8% 0px' },
   );
-  observer.observe(element);
-  return () => observer.disconnect();
+  // Content under the page-turn blob, or under a screen holding the page, counts as
+  // in view, so start watching once it lifts. The holding screen's own text needn't wait
+  const cancel = afterPageReveal(() => observer.observe(element), { overHold: element.closest(`[${OVER_HOLD}]`) !== null });
+  return () => {
+    cancel();
+    observer.disconnect();
+  };
 }
 
 /** Fired by a ScrollReveal block once its box has grown in */

@@ -6,6 +6,7 @@ import { PencilSimpleLine } from '@phosphor-icons/react';
 import { createClient } from '@/lib/supabase/client';
 import { errorMessage } from '@/lib/supabase/errors';
 import { TextField, type FormStatus, type SelectOption } from '../auth/fields';
+import { turnPageTo } from '../motion/pageCover';
 import BackLink from './BackLink';
 import OnboardingForm from './OnboardingForm';
 
@@ -71,8 +72,8 @@ export default function SurveyForm({ initial }: { initial: SurveyAnswers | null 
       setStatus({ tone: 'error', text: errorMessage(error) });
       return;
     }
-    // Stays disabled while Beranda loads
-    router.push('/');
+    // Stays disabled while Beranda loads, behind the page-turn blob when it can play
+    if (!turnPageTo('/')) router.push('/');
   }
 
   return (

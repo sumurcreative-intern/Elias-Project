@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import PageTransition from '@/components/motion/PageTransition';
 import './globals.css';
 
 // Self-hosted (latin, variable) so builds never depend on reaching Google Fonts.
@@ -35,7 +36,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id" className={`${archivo.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PageTransition />
+      </body>
     </html>
   );
 }

@@ -1,7 +1,8 @@
+import type { User } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AppShell from '@/components/app/AppShell';
-import CycleLoading from '@/components/beranda/CycleLoading';
+import CycleGate, { CyclePending } from '@/components/beranda/CycleGate';
 import CycleUnavailable from '@/components/beranda/CycleUnavailable';
 import FeedPages from '@/components/beranda/FeedPages';
 import FeedScope from '@/components/beranda/FeedScope';
@@ -56,24 +57,30 @@ type SearchParams = Promise<{ siklus?: string; halaman?: string; tampil?: string
 
 /**
  * The first visit of the WIB day waits for the cycle to be generated, so the
- * whole page streams in behind a loading screen. The boundary sits outside
+ * whole page streams in behind a loading screen, which CycleGate keeps up
+ * until its bar has filled to 100%. The boundary sits outside
  * AppShell: its entrance animation reveals the cards when it mounts, and
  * would miss cards streamed in after it.
  */
-export default function BerandaPage({ searchParams }: { searchParams: SearchParams }) {
-  return (
-    <Suspense fallback={<CycleLoading />}>
-      <Beranda searchParams={searchParams} />
-    </Suspense>
-  );
-}
-
-async function Beranda({ searchParams }: { searchParams: SearchParams }) {
-  const { siklus, halaman, tampil } = await searchParams;
+export default async function BerandaPage({ searchParams }: { searchParams: SearchParams }) {
+  // Read before the boundary so the loading screen's header shows the right actions
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  return (
+    <CycleGate signedIn={user !== null}>
+      <Suspense fallback={<CyclePending />}>
+        <Beranda searchParams={searchParams} user={user} />
+      </Suspense>
+    </CycleGate>
+  );
+}
+
+async function Beranda({ searchParams, user }: { searchParams: SearchParams; user: User | null }) {
+  const { siklus, halaman, tampil } = await searchParams;
+  const supabase = await createClient();
 
   // Guests never touch profile data (BR-4); the proxy only lets finished profiles through
   const profile = user ? await fetchProfile(supabase, user.id) : null;
