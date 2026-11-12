@@ -3,6 +3,7 @@ import AuthLayout from '@/components/AuthLayout';
 import SurveyForm, { type SurveyAnswers } from '@/components/onboarding/SurveyForm';
 import { onboardingFlow } from '@/components/progress/flows';
 import StepList from '@/components/progress/StepList';
+import { randomHeadline, welcomeHeadlines } from '@/lib/heroHeadlines';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export default async function OnboardingSurveyPage() {
   return (
     <AuthLayout
       hero={{
-        headline: ['PAGI KAMU,', 'KEPALA', 'JENIUS'],
+        headline: randomHeadline(welcomeHeadlines),
         body: <>Elias membaca tren dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan <strong>brand dan peran kamu</strong>.</>,
         angle: '216.34deg',
         children: <StepList flow={onboardingFlow} current={3} />,

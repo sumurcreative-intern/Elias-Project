@@ -6,6 +6,9 @@ import type { CookieOptions } from '@supabase/ssr';
  */
 export const REMEMBER_COOKIE = 'elias-remember';
 
+/** The sign-up's "Ingat saya" choice in user metadata, for a confirmation link opened in another browser */
+export const REMEMBER_METADATA = 'remember_me';
+
 /** Records the "Ingat saya" choice before signing in, so every later session write follows it. */
 export function setRememberPreference(remember: boolean) {
   document.cookie = remember

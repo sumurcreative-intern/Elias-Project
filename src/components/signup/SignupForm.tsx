@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Users } from '@phosphor-icons/react';
 import { createClient } from '@/lib/supabase/client';
 import { errorMessage } from '@/lib/supabase/errors';
+import { REMEMBER_METADATA, setRememberPreference } from '@/lib/supabase/remember';
 import {
   AuthFooterNote,
   DropdownField,
@@ -48,12 +49,15 @@ export default function SignupForm() {
     setSubmitting(true);
     setStatus(null);
 
+    // Covers a session started here or by a confirmation link opened in this browser;
+    // the metadata copy covers a link opened anywhere else (/auth/confirm)
+    setRememberPreference(remember);
     // account_type reaches public.profiles through the on_auth_user_created trigger
     const { data, error } = await createClient().auth.signUp({
       email: email.trim(),
       password,
       options: {
-        data: { account_type: accountType },
+        data: { account_type: accountType, [REMEMBER_METADATA]: remember },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/profile`,
       },
     });

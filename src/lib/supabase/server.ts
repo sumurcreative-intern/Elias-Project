@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
+import type { User } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { REMEMBER_COOKIE, sessionCookieOptions } from './remember';
+import { REMEMBER_COOKIE, REMEMBER_METADATA, sessionCookieOptions } from './remember';
 
 /** Supabase client for route handlers and server components. */
 export async function createClient() {
@@ -27,4 +28,19 @@ export async function createClient() {
       },
     },
   );
+}
+
+/**
+ * A confirmation link opened in another browser never saw the sign-up's
+ * "Ingat saya" cookie, so the session it just wrote got Supabase's 400-day
+ * lifetime. When the user left it unchecked, records that here and rewrites
+ * the auth cookies without a lifetime, so they end with the browser session.
+ */
+export async function applySignupRememberChoice(user: User | null) {
+  if (user?.user_metadata?.[REMEMBER_METADATA] !== false) return;
+  const cookieStore = await cookies();
+  cookieStore.set(REMEMBER_COOKIE, '0', { path: '/', sameSite: 'lax' });
+  for (const { name, value } of cookieStore.getAll()) {
+    if (name.startsWith('sb-')) cookieStore.set(name, value, { path: '/', sameSite: 'lax' });
+  }
 }

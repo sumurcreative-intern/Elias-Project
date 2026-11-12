@@ -19,3 +19,22 @@ export function onceInView(element: Element, play: () => void): () => void {
   observer.observe(element);
   return () => observer.disconnect();
 }
+
+/** Fired by a ScrollReveal block once its box has grown in */
+export const REVEAL_CUE = 'scrollreveal:cue';
+
+/**
+ * Like onceInView, except inside a ScrollReveal block it waits for that
+ * block's cue, so a heading plays after its box rather than on its own. A
+ * block already cued (the text re-rendered later) plays right away.
+ */
+export function onceCued(element: Element, play: () => void): () => void {
+  const block = element.parentElement?.closest('[data-animate="scroll"]');
+  if (!block) return onceInView(element, play);
+  if (block.hasAttribute('data-cued')) {
+    play();
+    return () => {};
+  }
+  block.addEventListener(REVEAL_CUE, play, { once: true });
+  return () => block.removeEventListener(REVEAL_CUE, play);
+}

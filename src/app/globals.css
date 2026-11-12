@@ -106,7 +106,8 @@
 @media (prefers-reduced-motion: no-preference) {
   [data-animate],
   [data-animate='scroll'] [data-reveal],
-  [data-split] [data-word] {
+  [data-split='type'] [data-word],
+  [data-split='scramble'] [data-char] {
     visibility: hidden;
   }
 }

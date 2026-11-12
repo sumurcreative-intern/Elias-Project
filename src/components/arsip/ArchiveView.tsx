@@ -59,7 +59,7 @@ export default function ArchiveView({ showSampleLoader }: { showSampleLoader: bo
         {/* Opens with the execution count, Elias's primary metric (Ch. 5) */}
         <MotionText
           as="h1"
-          effect="blur"
+          effect="scramble"
           delay={0.2}
           text={!hydrated ? ' ' : empty ? 'Belum ada tren tersimpan.' : `${executed} dari ${items.length} tren sudah dieksekusi.`}
           className="max-w-4xl text-2xl font-bold md:text-display-sm laptop:text-display-md"

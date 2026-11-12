@@ -144,7 +144,7 @@ async function Beranda({ searchParams }: { searchParams: SearchParams }) {
           />
           <MotionText
             as="h1"
-            effect="blur"
+            effect="scramble"
             delay={0.25}
             text={
               insights.length

@@ -49,7 +49,7 @@ export default function InsightCard({ insight, flavour }: { insight: Insight; fl
         </div>
 
         <div className="flex flex-col gap-2">
-          <MotionText as="h2" effect="blur" delay={0.2} text={insight.signal} className="text-lg font-semibold md:text-xl" />
+          <MotionText as="h2" effect="scramble" text={insight.signal} className="text-lg font-semibold md:text-xl" />
           <p data-reveal className="text-md text-neutral-600">{insight.whyItMatters}</p>
           {insight.lifecycle && (
             <p data-reveal className="flex items-center gap-1.5 text-sm text-neutral-700">

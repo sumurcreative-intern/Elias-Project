@@ -17,5 +17,11 @@ const messages: Record<string, string> = {
 };
 
 export function errorMessage(error: AuthError | PostgrestError): string {
-  return (error.code && messages[error.code]) || 'Terjadi kesalahan. Silakan coba lagi.';
+  if (error.code && messages[error.code]) return messages[error.code];
+  // The SMTP provider refused the mail; Supabase only reports it as unexpected_failure
+  if (/sending (confirmation|recovery|magic link)? ?email/i.test(error.message)) {
+    // Shared with password recovery, so it doesn't promise anything about the account
+    return 'Email dari Elias gagal dikirim. Coba lagi beberapa saat lagi.';
+  }
+  return 'Terjadi kesalahan. Silakan coba lagi.';
 }

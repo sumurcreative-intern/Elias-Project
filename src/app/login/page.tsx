@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import AuthLayout from '@/components/AuthLayout';
 import LoginForm from '@/components/LoginForm';
+import { nudgeHeadlines, randomHeadline } from '@/lib/heroHeadlines';
 
 export const metadata: Metadata = {
   title: 'Masuk — Elias',
@@ -14,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <AuthLayout
       minimalHeader
       hero={{
-        headline: ['IDE NGGAK', 'NUNGGU', 'MOOD.'],
+        headline: randomHeadline(nudgeHeadlines),
         body: <>Elias membaca Trends dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan <strong>brand dan peran kamu</strong>.</>,
         angle: '215.67deg',
       }}

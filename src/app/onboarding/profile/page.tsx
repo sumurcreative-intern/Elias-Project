@@ -3,6 +3,7 @@ import AuthLayout from '@/components/AuthLayout';
 import ProfileForm, { type ProfileAnswers } from '@/components/onboarding/ProfileForm';
 import { onboardingFlow } from '@/components/progress/flows';
 import StepList from '@/components/progress/StepList';
+import { randomHeadline, welcomeHeadlines } from '@/lib/heroHeadlines';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default async function OnboardingProfilePage() {
   return (
     <AuthLayout
       hero={{
-        headline: ['PAGI KAMU,', 'KEPALA', 'JENIUS'],
+        headline: randomHeadline(welcomeHeadlines),
         body: <>Elias membaca tren dan berita global terbaru, lalu memberi rekomendasi yang sesuai dengan <strong>brand dan peran kamu</strong>.</>,
         angle: '213.3deg',
         children: <StepList flow={onboardingFlow} current={1} />,
