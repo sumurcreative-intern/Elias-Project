@@ -4,7 +4,7 @@ import { useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { reducedMotion } from './inView';
-import { setPageCovered, setPageTurner, setPageWiper } from './pageCover';
+import { setPageCovered, setPageTurner } from './pageCover';
 
 // Rounder at the leading edge while it travels, looser once it fills the screen
 const SHAPE_TRAVEL = '50% 50% 40% 60% / 60% 50% 50% 40%';
@@ -73,19 +73,7 @@ export default function PageTransition() {
     return true;
   };
 
-  // Covers the screen, swaps what's underneath without navigating, then lifts
-  // once React has painted the swap
-  const wipe = (swap: () => void) => {
-    if (reducedMotion() || !blob.current || phase.current !== 'idle') return false;
-    cover(() => {
-      swap();
-      requestAnimationFrame(() => requestAnimationFrame(lift));
-    });
-    return true;
-  };
-
   useEffect(() => setPageTurner(turn));
-  useEffect(() => setPageWiper(wipe));
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {

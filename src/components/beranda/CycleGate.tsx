@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { holdPageReveal, OVER_HOLD, wipePage } from '../motion/pageCover';
+import gsap from 'gsap';
+import { reducedMotion } from '../motion/inView';
+import { holdPageReveal, OVER_HOLD } from '../motion/pageCover';
 import CycleLoading from './CycleLoading';
 
 // unknown: before hydration, when only CSS knows whether the cycle is pending.
-// loading → arrived (the page streamed in underneath, the bar fills to 100%
-// and the rings zoom out) → done, swapped out behind the page-turn blob
+// loading → arrived (the page streamed in underneath, the bar fills to 100%)
+// → done, the screen fading off the page
 type Phase = 'unknown' | 'loading' | 'arrived' | 'done';
 
 const PENDING = '[data-cycle-pending]';
@@ -22,12 +24,12 @@ export function CyclePending() {
 
 /**
  * Keeps the cycle loading screen over Beranda until its bar reaches 100%,
- * even when the page has already streamed in underneath, then wipes it away
- * behind the page-turn blob, which lifts off the page's entrance. Visits
- * whose cycle is ready never show it.
+ * even when the page has already streamed in underneath, then fades it off
+ * the page in 0.3s. Visits whose cycle is ready never show it.
  */
 export default function CycleGate({ signedIn, children }: { signedIn: boolean; children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
+  const screen = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<Phase>('unknown');
 
   useEffect(() => {
@@ -61,10 +63,19 @@ export default function CycleGate({ signedIn, children }: { signedIn: boolean; c
     };
   }, [holding]);
 
+  function leave() {
+    if (reducedMotion() || !screen.current) {
+      setPhase('done');
+      return;
+    }
+    gsap.to(screen.current, { autoAlpha: 0, duration: 0.3, ease: 'power1.out', onComplete: () => setPhase('done') });
+  }
+
   return (
     <div ref={root} className="group/cycle">
       {phase !== 'done' && (
         <div
+          ref={screen}
           {...{ [OVER_HOLD]: '' }}
           // Before hydration, shown only while the fallback is in the page
           className={`fixed inset-0 z-50 overflow-y-auto overscroll-contain ${
@@ -74,8 +85,7 @@ export default function CycleGate({ signedIn, children }: { signedIn: boolean; c
           <CycleLoading
             signedIn={signedIn}
             arrived={phase === 'arrived'}
-            // Without a blob to play (reduced motion), straight to the page
-            onLeave={() => wipePage(() => setPhase('done')) || setPhase('done')}
+            onLeave={leave}
           />
         </div>
       )}

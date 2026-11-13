@@ -29,17 +29,10 @@ const stages = [
 // Seconds each source stays highlighted
 const PART_S = 2;
 
-// Once the page arrives: the rest of the bar fills in FILL_S, up to FILL_S + FILL_EXTRA_S
-// from empty, while the sources light up one by one, the last as it reaches 100%.
-// Everything lit then holds for HOLD_S before the screen leaves
-const FILL_S = 1.6;
-const FILL_EXTRA_S = 0.8;
-const HOLD_S = 1.5;
-// On the way out each ring zooms past, innermost first, RING_GAP_S apart.
-// The blob starts wiping WIPE_AT_S into that, while the outer rings still go
-const RING_ZOOM_S = 0.9;
-const RING_GAP_S = 0.14;
-const WIPE_AT_S = 1.1;
+// Once the page arrives the rest of the bar fills in FILL_S while the sources
+// light up one by one, the last as it reaches 100%, and the screen leaves at once:
+// the page is ready underneath, so nothing should hold it back
+const FILL_S = 0.4;
 
 // The Figma background's dashed rings, innermost first, one file each so they can move apart
 const rings = Array.from({ length: 7 }, (_, i) => `/images/reading-rings/ring-${i + 1}.svg`);
@@ -61,7 +54,7 @@ type CycleLoadingProps = {
   signedIn: boolean;
   /** The page has streamed in underneath: fill the bar to 100%, then leave */
   arrived: boolean;
-  /** The rings are zooming out: time to wipe over to the page */
+  /** The bar has filled: time to show the page */
   onLeave: () => void;
 };
 
@@ -129,9 +122,7 @@ export default function CycleLoading({ signedIn, arrived, onLeave }: CycleLoadin
 
   const estimate = Math.round(CEILING * (1 - Math.exp(-elapsed / PACE_S)));
 
-  // Fill to 100% as the sources light up in order, hold with everything lit,
-  // then leave: the text lifts away, the rings zoom past one by one, and the
-  // page-turn blob wipes over to the page
+  // Fill to 100% as the sources light up in order, then leave straight away
   useGSAP(
     () => {
       if (!arrived) return;
@@ -139,39 +130,21 @@ export default function CycleLoading({ signedIn, arrived, onLeave }: CycleLoadin
       if (reducedMotion()) {
         setFilled(100);
         setRetrieved(sources);
-        gsap.delayedCall(HOLD_S, onLeave);
+        onLeave();
         return;
       }
       const bar = { value: estimate };
-      const fill = FILL_S + (FILL_EXTRA_S * (100 - estimate)) / 100;
       const timeline = gsap.timeline().to(bar, {
         value: 100,
-        duration: fill,
-        ease: 'none',
+        duration: FILL_S,
+        ease: 'power1.out',
         onUpdate: () => setFilled(bar.value),
       });
       // Evenly through the fill, so berita lights as the bar reaches 100%
       for (let i = 1; i <= sources; i++) {
-        timeline.call(() => setRetrieved(i), undefined, (fill * i) / sources);
+        timeline.call(() => setRetrieved(i), undefined, (FILL_S * i) / sources);
       }
-      const ringEls = gsap.utils.toArray<HTMLElement>('[data-ring]');
-      timeline
-        .addLabel('leave', fill + HOLD_S)
-        .to('[data-animate="page-item"]', { autoAlpha: 0, y: -16, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'leave')
-        // The swell lets go of the rings; they keep turning as they fly past
-        .call(() => gsap.killTweensOf(ringEls, 'scale,opacity'), undefined, 'leave')
-        .to(
-          ringEls,
-          {
-            scale: 2.6,
-            opacity: 0,
-            duration: RING_ZOOM_S,
-            ease: 'power3.in',
-            stagger: RING_GAP_S,
-          },
-          'leave+=0.15',
-        )
-        .call(onLeave, undefined, `leave+=${WIPE_AT_S}`);
+      timeline.call(onLeave);
     },
     // CycleGate only ever moves forward, so the callbacks needn't restart this
     { scope, dependencies: [arrived] },

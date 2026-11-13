@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -44,11 +44,28 @@ function NavItems({ pathname, mobile = false }: { pathname: string; mobile?: boo
   });
 }
 
-/** Header for the app pages. `signedIn` swaps the Daftar/Masuk links for Keluar. */
+// Past this many pixels the page runs under the header, so it needs its own surface
+const SCROLLED_PX = 8;
+
+/**
+ * Header for the app pages. `signedIn` swaps the Daftar/Masuk links for Keluar.
+ * Transparent over the top of the page, so a backdrop shows through; white
+ * with a soft shadow once the page scrolls under it.
+ */
 export default function AppHeader({ signedIn }: { signedIn: boolean }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > SCROLLED_PX);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
+  // The open mobile menu needs a surface to sit on, scrolled or not
+  const solid = scrolled || menuOpen;
 
   useGSAP(
     () => {
@@ -59,7 +76,12 @@ export default function AppHeader({ signedIn }: { signedIn: boolean }) {
   );
 
   return (
-    <header data-animate="header" className="sticky top-0 z-10 w-full border-b border-neutral-100 bg-bg-white">
+    <header
+      data-animate="header"
+      className={`sticky top-0 z-10 w-full transition-[background-color,box-shadow] duration-300 ease-out ${
+        solid ? 'bg-bg-white shadow-header' : 'bg-transparent'
+      }`}
+    >
       <div className="flex h-[72px] items-center justify-between pr-4 pl-6 md:pr-[22px] md:pl-[30px] laptop:h-20 laptop:px-[82px]">
         <div className="flex items-center gap-10">
           <Link href="/" aria-label="Elias beranda">

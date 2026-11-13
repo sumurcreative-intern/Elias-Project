@@ -10,6 +10,10 @@
   --color-primary-subtle: #f5b2aa;
   --color-primary-surface: #f4d2cc;
   --color-primary-border: #f79289;
+  /* Colors/Red/100: source and category tags on Beranda cards */
+  --color-primary-tint: #ffe2e2;
+  /* Colors/Neutral/100: outline of the source chips */
+  --color-hairline: #e4e1dd;
   /* Deep Ember: hover for primary actions and secondary accents */
   --color-ember: #c41e28;
   /* Brand/Gradient/Spark: primary → spark-via (50%) → spark-to */
@@ -76,10 +80,26 @@
   --text-display-lg: 48px;
   --text-display-lg--line-height: 60px;
   --text-display-lg--letter-spacing: -0.96px;
+  --text-display-2xl: 72px;
+  --text-display-2xl--line-height: 90px;
+  --text-display-2xl--letter-spacing: -1.44px;
   --text-display-3xl: 80px;
   --text-display-3xl--line-height: 70px;
 
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  /* Beranda's cards: a soft glow on every side instead of a border */
+  --shadow-card: 0 0 3px 0 rgb(12 11 16 / 0.1);
+  /* The app header once the page scrolls under it */
+  --shadow-header: 0 1px 2px 0 rgb(12 11 16 / 0.04), 0 4px 16px -4px rgb(12 11 16 / 0.08);
+
+  /* Beranda's backdrop: slow enough to read as ambience, never as movement to follow */
+  --animate-backdrop-spin: backdrop-spin 240s linear infinite;
+
+  @keyframes backdrop-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
 
   /* mobile < 768 (md) ≤ tablet < 1200 (laptop) ≤ laptop */
   --breakpoint-laptop: 75rem;
@@ -115,6 +135,54 @@
   [data-split='type'] [data-word],
   [data-split='scramble'] [data-char] {
     visibility: hidden;
+  }
+
+  /*
+   * AppShell's entrance is plain CSS, so it plays on the first paint of the
+   * server HTML rather than waiting for JavaScript to load and hydrate.
+   * More specific than the hiding rule above, which it overrides.
+   */
+  [data-shell] [data-animate='header'] {
+    visibility: visible;
+    animation: shell-drop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  [data-shell] [data-animate='page-item'] {
+    visibility: visible;
+    animation: shell-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+  }
+  [data-shell] [data-animate='footer'] {
+    visibility: visible;
+    animation: shell-fade 0.5s ease-out 0.2s both;
+  }
+
+  /*
+   * MotionText's "fill": every word starts faded into the background and
+   * fills to full strength in reading order as --fill (0 to 1, set from the
+   * scroll position) passes it. Word i of --words owns the stretch from
+   * i/words to (i+1)/words.
+   */
+  [data-split='fill'] [data-word] {
+    opacity: calc(0.12 + 0.88 * clamp(0, var(--fill, 0) * var(--words) - var(--i), 1));
+  }
+}
+
+@keyframes shell-drop {
+  from {
+    opacity: 0;
+    translate: 0 -16px;
+  }
+}
+
+@keyframes shell-rise {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+@keyframes shell-fade {
+  from {
+    opacity: 0;
   }
 }
 

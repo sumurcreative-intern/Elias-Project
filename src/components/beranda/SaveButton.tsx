@@ -28,16 +28,16 @@ export default function SaveButton({ insight }: { insight: Insight }) {
       type="button"
       aria-pressed={Boolean(saved) && !briefMissing}
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+      className={`flex items-center gap-2 rounded-[4px] border px-3 py-2 text-xs font-medium transition-colors ${
         saved && !briefMissing
-          ? 'border-txt-black bg-txt-black text-txt-white hover:bg-neutral-80'
-          : 'border-disabled-surface text-txt-black hover:border-txt-black'
+          ? 'border-primary bg-primary text-bg-white hover:border-ember hover:bg-ember'
+          : 'border-primary text-primary hover:bg-primary-tint'
       }`}
     >
       {briefMissing ? (
-        <NotePencil size={18} aria-hidden />
+        <NotePencil size={16} aria-hidden />
       ) : (
-        <BookmarkSimple size={18} weight={saved ? 'fill' : 'regular'} aria-hidden />
+        <BookmarkSimple size={16} weight={saved ? 'fill' : 'regular'} aria-hidden />
       )}
       {!saved
         ? 'Simpan ke Arsip'

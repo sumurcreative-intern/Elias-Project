@@ -1,36 +1,43 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ArrowClockwise, ArrowUpRight, CircleNotch, MagnifyingGlass, WarningCircle, YoutubeLogo, type Icon } from '@phosphor-icons/react';
+import { ChartLineUp, CircleNotch, Swap, WarningCircle } from '@phosphor-icons/react';
 import type { TrendingResponse } from '@/app/api/trending/route';
 import type { Trending } from '@/lib/insights/trending';
 import MotionText from '../motion/MotionText';
+import SectionTab from './SectionTab';
+import SourceChip, { leadFigure } from './SourceChip';
 
-const monoLabel = 'font-mono text-xs font-bold tracking-wide text-gray-600 uppercase';
-const chip =
-  'group flex items-center gap-1.5 rounded-full border border-neutral-200 px-3 py-1.5 text-sm transition-colors hover:border-txt-black';
+const monoLabel = 'font-mono text-xs text-disabled-content uppercase';
 // Ignition Red only on verbs; Deep Ember is its hover
 const primaryCta =
-  'flex w-fit items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-bg-white transition-colors hover:bg-ember disabled:bg-primary/60';
+  'flex w-fit items-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-semibold text-bg-white transition-colors hover:bg-ember disabled:bg-primary/60';
 const quietLink = 'w-fit text-sm font-semibold text-neutral-600 underline-offset-2 transition-colors hover:text-txt-black hover:underline';
 
-type Chip = { term: string; detail: string | null; url: string };
+type Chip = { term: string; lines: ReactNode[]; url: string };
 
 // Mixed widths so the placeholder reads like a row of real terms
-const skeletonWidths = ['w-28', 'w-36', 'w-24', 'w-32', 'w-20', 'w-40', 'w-28', 'w-24'];
+const skeletonWidths = ['w-36', 'w-40', 'w-32', 'w-44', 'w-36', 'w-28', 'w-40', 'w-32'];
 
-/** Placeholder pills, sized like a chip, with a shimmer GSAP sweeps across. */
+/**
+ * Placeholder boxes, sized like a chip: a pale Ignition Red gradient with a
+ * warmer red band GSAP sweeps across, so loading reads as the brand.
+ */
 function ChipSkeleton() {
   return (
-    <ul aria-hidden className="flex flex-wrap gap-2">
+    <ul aria-hidden className="flex flex-wrap gap-2.5">
       {skeletonWidths.map((width, i) => (
-        <li key={i} data-skeleton className={`relative h-[34px] overflow-hidden rounded-full bg-neutral-200 ${width}`}>
+        <li
+          key={i}
+          data-skeleton
+          className={`relative h-[52px] overflow-hidden bg-linear-to-br from-primary-tint to-primary-surface ${width}`}
+        >
           <span
             data-shimmer
-            className="absolute inset-y-0 -left-full w-full bg-linear-to-r from-transparent via-white/70 to-transparent"
+            className="absolute inset-y-0 -left-full w-full bg-linear-to-r from-transparent via-primary/25 to-transparent"
           />
         </li>
       ))}
@@ -38,27 +45,19 @@ function ChipSkeleton() {
   );
 }
 
-type ChipListProps = { label: string; icon: Icon; chips: Chip[]; empty: string; loading: boolean };
+type ChipListProps = { label: string; chips: Chip[]; empty: string; loading: boolean };
 
-function ChipList({ label, icon: SourceIcon, chips, empty, loading }: ChipListProps) {
+function ChipList({ label, chips, empty, loading }: ChipListProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <p className={`flex items-center gap-1.5 ${monoLabel}`}>
-        <SourceIcon size={14} aria-hidden />
-        {label}
-      </p>
+    <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+      <p className={monoLabel}>{label}</p>
       {loading ? (
         <ChipSkeleton />
       ) : chips.length ? (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="flex flex-wrap gap-2.5">
           {chips.map((item) => (
-            <li key={item.term} data-chip>
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className={chip}>
-                <span className="font-semibold">{item.term}</span>
-                {item.detail && <span className="text-gray-600">· {item.detail}</span>}
-                <ArrowUpRight size={14} aria-hidden className="text-gray-600 group-hover:text-txt-black" />
-                <span className="sr-only">(buka di tab baru)</span>
-              </a>
+            <li key={item.term} data-chip className="max-w-full">
+              <SourceChip href={item.url} label={item.term} lines={item.lines} />
             </li>
           ))}
         </ul>
@@ -156,30 +155,30 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
     <section
       data-animate="page-item"
       aria-labelledby="trending-topics"
-      className="flex flex-col gap-5 rounded-2xl border border-neutral-200 p-5 md:p-6"
+      className="relative flex flex-col gap-6 rounded-xl bg-bg-white px-5 pt-[76px] pb-5 shadow-card md:px-8 md:pt-[72px] md:pb-8"
     >
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex flex-col gap-1">
-          <MotionText
-            as="h2"
-            id="trending-topics"
-            effect="type"
-            delay={0.3}
-            text={brand ? `Lagi ramai untuk ${brand}` : 'Lagi ramai hari ini'}
-            className="text-lg font-semibold"
-          />
-          <p aria-live="polite" className="text-sm text-neutral-600">
-            {brand
-              ? `Diambil ${wibTime(trending.readAt)} WIB dari chart YouTube kategori ${brand} dan pencarian Google terbaru. Belum dipilih Elias.`
-              : 'Data mentah dari Google dan YouTube Indonesia, sebelum dipilih Elias. Belum tentu layak untuk brand kamu.'}
-          </p>
-        </div>
+      <SectionTab icon={<ChartLineUp size={28} weight="fill" aria-hidden />}>
+        <MotionText
+          as="h2"
+          id="trending-topics"
+          effect="type"
+          delay={0.3}
+          text={brand ? `Lagi ramai untuk ${brand}` : 'Lagi ramai hari ini'}
+        />
+      </SectionTab>
+
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <p aria-live="polite" className="max-w-[504px] text-lg">
+          {brand
+            ? `Diambil ${wibTime(trending.readAt)} WIB dari chart YouTube kategori ${brand} dan pencarian Google terbaru. Belum dipilih Elias.`
+            : 'Data mentah diambil dari Google dan YouTube Indonesia. Belum tentu cocok untuk brand kamu.'}
+        </p>
 
         {brandLabel && (
           <div className="flex shrink-0 flex-col gap-2 md:items-end">
             <button type="button" onClick={refresh} disabled={loading} className={primaryCta}>
-              {loading ? <CircleNotch size={18} aria-hidden className="animate-spin" /> : <ArrowClockwise size={18} aria-hidden />}
-              {loading ? 'Mengambil tren…' : brand ? 'Perbarui lagi' : `Tren terbaru untuk ${brandLabel}`}
+              {loading ? <CircleNotch size={20} aria-hidden className="animate-spin" /> : <Swap size={20} aria-hidden />}
+              {loading ? 'Mengambil tren…' : brand ? 'Perbarui lagi' : 'Cari tren sesuai brand kamu'}
             </button>
             {brand && !loading && (
               <button type="button" onClick={() => setTrending(initial)} className={quietLink}>
@@ -204,7 +203,7 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
         </div>
       )}
 
-      <div ref={scope} aria-busy={loading} className="grid gap-5 laptop:grid-cols-2">
+      <div ref={scope} aria-busy={loading} className="flex flex-col gap-6 laptop:flex-row laptop:gap-2.5">
         {loading && (
           <p role="status" className="sr-only">
             Mengambil tren terbaru…
@@ -212,25 +211,20 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
         )}
         <ChipList
           loading={loading}
-          label={brand ? 'Dicari di Google · semua kategori · 24 jam' : 'Dicari di Google · 24 jam'}
-          icon={MagnifyingGlass}
+          label={brand ? 'Pencarian Google · semua kategori · 24 jam' : 'Pencarian Google selama 24 jam'}
           empty="Belum ada pencarian yang tercatat dalam 24 jam terakhir."
           chips={searches.map((search) => ({
             term: search.term,
-            detail:
-              [
-                search.approxTraffic ? `${search.approxTraffic.toLocaleString('id-ID')}+` : null,
-                search.daysInRow > 1 ? `${search.daysInRow} hari` : null,
-              ]
-                .filter(Boolean)
-                .join(' · ') || null,
+            lines: [
+              search.approxTraffic ? leadFigure(`${search.approxTraffic.toLocaleString('id-ID')}+ jumlah pencarian`) : null,
+              search.daysInRow > 1 ? leadFigure(`${search.daysInRow} hari berturut-turut`) : null,
+            ].filter(Boolean),
             url: search.url,
           }))}
         />
         <ChipList
           loading={loading}
-          label={brand ? `Topik berulang di YouTube · ${brand}` : 'Topik berulang di YouTube · hari ini'}
-          icon={YoutubeLogo}
+          label={brand ? `Topik sering muncul di YouTube · ${brand}` : 'Topik sering muncul di YouTube hari ini'}
           empty={
             brand
               ? `Belum ada topik yang berulang di beberapa channel untuk ${brand} saat ini.`
@@ -238,7 +232,7 @@ export default function TrendingTopics({ initial, brandLabel }: TrendingTopicsPr
           }
           chips={topics.map((topic) => ({
             term: topic.term,
-            detail: `${topic.videos} video · ${topic.channels} channel`,
+            lines: [leadFigure(`${topic.videos} video`), leadFigure(`${topic.channels} channel`)],
             url: topic.url,
           }))}
         />

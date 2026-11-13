@@ -70,22 +70,3 @@ export function setPageTurner(turn: PageTurn): () => void {
 export function turnPageTo(href: string, options?: { refresh?: boolean }): boolean {
   return turner?.(href, options) ?? false;
 }
-
-type PageWipe = (swap: () => void) => boolean;
-let wiper: PageWipe | null = null;
-
-/** Registered by PageTransition, so a screen can leave behind the blob. */
-export function setPageWiper(wipe: PageWipe): () => void {
-  wiper = wipe;
-  return () => {
-    if (wiper === wipe) wiper = null;
-  };
-}
-
-/**
- * Covers the screen with the page-turn blob, runs `swap` underneath, then
- * lifts it. False when no blob can play, for the caller to swap at once.
- */
-export function wipePage(swap: () => void): boolean {
-  return wiper?.(swap) ?? false;
-}

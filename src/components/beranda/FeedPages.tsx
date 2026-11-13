@@ -16,7 +16,7 @@ type FeedPagesProps = {
   children: ReactNode;
 };
 
-/** The last 5 days of cycles, 10 cards per numbered page (`/?halaman=N`). */
+/** The last 5 days of cycles, 10 cards per numbered page (5 on phones) (`/?halaman=N`). */
 export default function FeedPages({ page, pageCount, first, last, total, query, children }: FeedPagesProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -34,8 +34,9 @@ export default function FeedPages({ page, pageCount, first, last, total, query, 
   }
 
   return (
-    <div ref={scope} className="flex scroll-mt-28 flex-col gap-4 md:gap-6">
-      <p aria-live="polite" className="text-sm text-gray-600">
+    <div ref={scope} className="flex scroll-mt-28 flex-col gap-8">
+      {/* Announced on page changes; the numbered pages already show where you are */}
+      <p aria-live="polite" className="sr-only">
         Menampilkan{' '}
         <strong>
           {first}–{last}

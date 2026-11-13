@@ -1,8 +1,9 @@
 import type { StoredCard } from './store';
 import type { Insight } from './types';
 
-/** Cards per numbered page on Beranda. */
+/** Cards per numbered page on Beranda; phones get a shorter page. */
 export const feedPageSize = 10;
+export const mobileFeedPageSize = 5;
 
 // Within a day: what to do first, then what to watch, then what to skip
 const verdictOrder: Record<Insight['verdict'], number> = { act: 0, watch: 1, skip: 2 };
@@ -29,12 +30,12 @@ export type FeedPage = {
  * One page of the stored cycles. Every page is a slice of cycles already
  * generated (BR-1): paging never fetches new trends.
  */
-export function feedPage(cards: StoredCard[], requested: string | undefined): FeedPage {
-  const count = Math.max(1, Math.ceil(cards.length / feedPageSize));
+export function feedPage(cards: StoredCard[], requested: string | undefined, size = feedPageSize): FeedPage {
+  const count = Math.max(1, Math.ceil(cards.length / size));
   const parsed = Number.parseInt(requested ?? '', 10);
   const page = Number.isNaN(parsed) ? 1 : Math.min(Math.max(parsed, 1), count);
-  const start = (page - 1) * feedPageSize;
-  const items = cards.slice(start, start + feedPageSize);
+  const start = (page - 1) * size;
+  const items = cards.slice(start, start + size);
   return { page, count, items, first: start + 1, last: start + items.length };
 }
 

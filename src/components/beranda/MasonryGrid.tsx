@@ -43,12 +43,12 @@ export default function MasonryGrid({ children }: { children: ReactNode }) {
       // Vertical spacing lives in each item's padding, so the 2px rows add no gap of their own
       // Columns at least 22rem and at least half the row, so never more than two;
       // one column once two would be narrower than 22rem
-      className={`-mb-4 grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(22rem,calc((100%-2rem)/2))),1fr))] gap-x-4 md:-mb-6 md:gap-x-6 ${
+      className={`grid grid-cols-[repeat(auto-fill,minmax(min(100%,max(22rem,calc((100%-var(--gap))/2))),1fr))] gap-x-(--gap) -mb-(--gap) [--gap:1rem] md:[--gap:1.5rem] laptop:[--gap:50px] ${
         measured ? 'auto-rows-[2px]' : ''
       }`}
     >
       {Children.map(children, (child) => (
-        <div className="self-start pb-4 md:pb-6">{child}</div>
+        <div className="self-start pb-(--gap)">{child}</div>
       ))}
     </div>
   );

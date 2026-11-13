@@ -3,7 +3,8 @@
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { pageList } from '@/lib/archiveQuery';
 
-const cell = 'flex size-10 items-center justify-center rounded-lg text-sm font-semibold transition-colors';
+const cell = 'flex h-[34px] items-center justify-center rounded-[4px] text-xs font-medium transition-colors';
+const arrow = `${cell} w-8 text-primary hover:bg-primary-tint disabled:text-primary-subtle disabled:hover:bg-transparent`;
 
 /** Numbered pages with the same structure on every breakpoint; no infinite scroll (AR-6). */
 export default function Pagination({
@@ -33,13 +34,13 @@ export default function Pagination({
         onClick={() => onPage(page - 1)}
         disabled={page === 1}
         aria-label="Halaman sebelumnya"
-        className={`${cell} text-neutral-700 hover:bg-neutral-100 disabled:text-disabled-surface disabled:hover:bg-transparent`}
+        className={arrow}
       >
-        <CaretLeft size={18} />
+        <CaretLeft size={16} />
       </button>
       {pageList(page, pageCount).map((n, i) =>
         n === null ? (
-          <span key={`gap-${i}`} aria-hidden className={`${cell} text-gray-600`}>
+          <span key={`gap-${i}`} aria-hidden className={`${cell} w-[34px] text-primary`}>
             …
           </span>
         ) : (
@@ -49,7 +50,7 @@ export default function Pagination({
             onClick={() => onPage(n)}
             aria-current={n === page ? 'page' : undefined}
             aria-label={`Halaman ${n}`}
-            className={`${cell} ${n === page ? 'bg-txt-black text-txt-white' : 'text-neutral-700 hover:bg-neutral-100'}`}
+            className={`${cell} w-[34px] ${n === page ? 'bg-primary text-bg-white' : 'text-primary hover:bg-primary-tint'}`}
           >
             {n}
           </button>
@@ -60,9 +61,9 @@ export default function Pagination({
         onClick={() => onPage(page + 1)}
         disabled={page === pageCount}
         aria-label="Halaman berikutnya"
-        className={`${cell} text-neutral-700 hover:bg-neutral-100 disabled:text-disabled-surface disabled:hover:bg-transparent`}
+        className={arrow}
       >
-        <CaretRight size={18} />
+        <CaretRight size={16} />
       </button>
     </nav>
   );

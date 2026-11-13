@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import PageTransition from '@/components/motion/PageTransition';
+import SmoothScroll from '@/components/motion/SmoothScroll';
 import './globals.css';
 
 // Self-hosted (latin, variable) so builds never depend on reaching Google Fonts.
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         {children}
         <PageTransition />
+        <SmoothScroll />
       </body>
     </html>
   );

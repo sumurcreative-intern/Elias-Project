@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
-import { ArrowSquareOut, CaretDown, Check, CircleNotch, Copy, Lightning, WarningCircle } from '@phosphor-icons/react';
+import { CaretDown, Check, CircleNotch, Copy, MagicWand, WarningCircle } from '@phosphor-icons/react';
 import { archetypeDirections } from '@/lib/archetypes';
 import { creativeRoleLabels, type CreativeRole } from '@/lib/creativeRoles';
-import { decisionLabels, executionBrief } from '@/lib/elias/brief';
+import { executionBrief } from '@/lib/elias/brief';
 import { setBrief } from '@/lib/elias/briefs';
 import { cachedInsight, requestInsight } from '@/lib/elias/client';
 import {
@@ -34,108 +33,18 @@ type State = { kind: 'idle' } | { kind: 'loading' } | ({ kind: 'done' } & Ground
 // Retrying these can't succeed until something changes outside this card
 const finalErrors: InsightErrorCode[] = ['daily_limit', 'user_limit', 'not_configured', 'unauthorized', 'forbidden'];
 
-const monoMeta = 'font-mono text-[11px] leading-4 font-bold tracking-wide uppercase';
-const monoBadge = `w-fit rounded-sm border border-paper/20 px-1.5 py-0.5 ${monoMeta}`;
-const sectionLabel = `${monoMeta} text-paper/50`;
+const sectionLabel = 'font-mono text-xs text-disabled-content uppercase';
 // Ignition Red only on verbs; Deep Ember is its hover
-const primaryCta =
-  'flex w-fit items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-bg-white transition-colors hover:bg-ember disabled:bg-primary/60';
+const smallCta =
+  'flex w-fit items-center gap-2 rounded-[4px] bg-primary px-3 py-2 text-xs font-semibold text-bg-white transition-colors hover:bg-ember';
 const secondaryButton =
-  'flex w-fit items-center gap-2 rounded-md border border-paper/30 px-4 py-2.5 text-sm font-semibold text-paper transition-colors hover:border-ember';
+  'flex w-fit items-center gap-2 rounded-[4px] border border-txt-white px-3 py-2 text-xs font-medium text-txt-white transition-colors hover:border-primary hover:text-primary';
 
 function waitText(seconds: number | undefined): string {
   if (!seconds) return '';
   if (seconds < 120) return ' Coba lagi dalam sekitar satu menit.';
   const hours = Math.round(seconds / 3600);
   return hours >= 1 ? ` Kuota kembali dalam sekitar ${hours} jam.` : ` Kuota kembali dalam sekitar ${Math.ceil(seconds / 60)} menit.`;
-}
-
-/** "// SOURCE: YOUTUBE // GDELT VERIFIED", naming only the sources that answered. */
-function sourceLine(news: NewsContext, youtube: YouTubeTrends): string | null {
-  const parts = [youtube.status === 'ok' && 'SOURCE: YOUTUBE', news.status === 'ok' && 'GDELT VERIFIED'].filter(Boolean);
-  return parts.length ? `// ${parts.join(' // ')}` : null;
-}
-
-/**
- * The raw inputs behind the call. Headlines and video titles are third-party
- * text, so they stay collapsed, as links, and are never restated as fact.
- */
-function ContextAccordion({ news, youtube }: { news: NewsContext; youtube: YouTubeTrends }) {
-  return (
-    <details className="group flex flex-col gap-2">
-      <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 text-sm font-semibold text-paper [&::-webkit-details-marker]:hidden">
-        <CaretDown size={16} aria-hidden className="transition-transform group-open:rotate-180" />
-        Lihat konteks
-      </summary>
-
-      <div className="flex flex-col gap-5 pt-3">
-        <div className="flex flex-col gap-2">
-          <p className={sectionLabel}>Berita GDELT · 24 jam</p>
-          {news.status === 'ok' ? (
-            <ol className="flex flex-col gap-2">
-              {news.articles.map((article) => (
-                <li key={article.url} className="text-sm">
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group/link inline-flex items-start gap-1.5 text-paper/80 transition-colors hover:text-paper"
-                  >
-                    <span className="font-mono text-xs text-paper/50">[{article.domain}]</span>
-                    <span className="underline-offset-2 group-hover/link:underline">{article.title}</span>
-                    <ArrowSquareOut size={14} aria-hidden className="mt-0.5 shrink-0" />
-                    <span className="sr-only">(buka di tab baru)</span>
-                  </a>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="font-mono text-xs text-paper/50">{`// ${news.summary}`}</p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {/* The general chart, not videos about this trend; the label says so */}
-          <p className={sectionLabel}>Trending YouTube {youtube.regionCode} hari ini · bukan tentang tren ini</p>
-          {youtube.status === 'ok' && youtube.videos.length > 0 ? (
-            <ul className="flex flex-col gap-3">
-              {youtube.videos.map((video) => (
-                <li key={video.id}>
-                  <a
-                    href={`https://www.youtube.com/watch?v=${encodeURIComponent(video.id)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group/link flex items-start gap-3 text-paper/80 transition-colors hover:text-paper"
-                  >
-                    {video.thumbnail ? (
-                      <Image
-                        src={video.thumbnail}
-                        alt=""
-                        width={120}
-                        height={68}
-                        className="aspect-video w-[120px] shrink-0 rounded-sm object-cover"
-                      />
-                    ) : (
-                      <span aria-hidden className="aspect-video w-[120px] shrink-0 rounded-sm bg-paper/10" />
-                    )}
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="line-clamp-2 text-sm underline-offset-2 group-hover/link:underline">{video.title}</span>
-                      <span className="font-mono text-xs text-paper/50">
-                        {video.channelTitle} · {video.viewCount.toLocaleString('id-ID')} views
-                      </span>
-                      <span className="sr-only">(buka di tab baru)</span>
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="font-mono text-xs text-paper/50">{'// Data tren YouTube tidak tersedia saat ini.'}</p>
-          )}
-        </div>
-      </div>
-    </details>
-  );
 }
 
 /**
@@ -162,6 +71,9 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
   };
   const [state, setState] = useState<State>({ kind: 'idle' });
   const [copied, setCopied] = useState(false);
+  // A fresh analysis opens to be read; one restored from the session starts closed, so the feed stays short
+  const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
   const archetype = brandContext.archetype ? archetypeDirections[brandContext.archetype]?.name : null;
 
   // Session storage only exists in the browser, so a cached answer is restored after mount
@@ -179,7 +91,9 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
         ? { kind: 'done', result: response.insight, news: response.news, youtube: response.youtube }
         : { kind: 'error', error: response.error },
     );
+    setExpanded(true);
   }
+
 
   const briefFor = ({ result, news, youtube }: Grounded) =>
     executionBrief({ trendTopic: insight.signal, role: userRole, insight: result, news, youtube });
@@ -203,18 +117,22 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
   return (
     <section
       aria-label={`Analisis Elias untuk ${creativeRoleLabels[userRole]}`}
-      className="flex flex-col gap-4 rounded-xl border border-neutral-80 bg-txt-black p-4 pt-5 text-paper md:p-5 md:pt-6"
+      className="flex flex-col gap-2.5 rounded-[4px] bg-txt-black p-5 text-paper"
     >
-      <p className={`${monoMeta} text-paper/60`}>
-        {`ARCHETYPE: ${archetype ?? '—'} // ROLE: ${creativeRoleLabels[userRole]}`}
-      </p>
+      <ul aria-label="Disesuaikan untuk" className="flex flex-wrap gap-2.5">
+        {[creativeRoleLabels[userRole], archetype].filter(Boolean).map((label) => (
+          <li key={label} className="border border-primary px-3 py-1.5 font-mono text-xs font-bold text-primary uppercase">
+            {label}
+          </li>
+        ))}
+      </ul>
 
       {state.kind === 'idle' && (
         <>
-          <p className="text-sm text-paper/70">So what untuk peran kamu, <strong className="text-paper">satu action brief yang bisa dikerjakan hari ini</strong>, plus saran copy sesuai tone brand.</p>
-          <button type="button" onClick={analyse} className={primaryCta}>
-            <Lightning size={18} weight="fill" aria-hidden />
-            Analisis untuk brand ini
+          <p className="text-md font-medium text-txt-white">So what untuk peran kamu, <strong className="font-bold">satu action brief yang bisa dikerjakan hari ini</strong>, juga saran copy sesuai tone brand.</p>
+          <button type="button" onClick={analyse} className={smallCta}>
+            <MagicWand size={16} aria-hidden />
+            Analisis topik tren ini untuk brand kamu
           </button>
         </>
       )}
@@ -248,73 +166,84 @@ export default function EliasTrendCard({ insight, brandContext, userRole }: Elia
       )}
 
       {state.kind === 'done' && (
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={monoBadge}>{decisionLabels[state.result.decision]}</span>
-            {sourceLine(state.news, state.youtube) && (
-              <span className={`${monoMeta} text-paper/50`}>{sourceLine(state.news, state.youtube)}</span>
-            )}
-          </div>
-
+        <>
           {/* Decision first */}
-          <p className="border-l-4 border-primary pl-4 text-xl font-bold">{state.result.headline}</p>
+          <p className="border-l-2 border-primary pl-[18px] text-2xl font-bold text-txt-white">{state.result.headline}</p>
 
-          <div className="flex flex-col gap-1.5">
-            <p className={sectionLabel}>So what</p>
-            <p className="text-md text-paper/90">{state.result.soWhat}</p>
-            <p className="text-sm text-paper/60">{state.result.why}</p>
-          </div>
+          {/* Folds by animating its row from 0fr to 1fr; inert while closed so focus skips it */}
+          <div
+            id={detailsId}
+            inert={!expanded}
+            className={`grid transition-[grid-template-rows,margin] duration-300 ease-out motion-reduce:transition-none ${
+              expanded ? 'grid-rows-[1fr]' : '-mt-2.5 grid-rows-[0fr]'
+            }`}
+          >
+            <div className="flex min-h-0 flex-col gap-2.5 overflow-hidden">
+              <div className="flex flex-col gap-1.5">
+                <p className={sectionLabel}>So what</p>
+                <p className="text-md text-txt-white">{state.result.soWhat}</p>
+                <p className="text-xs text-disabled-surface">{state.result.why}</p>
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <p className={sectionLabel}>Make it today</p>
-            {state.result.decision === 'skip' ? (
-              <p className="text-md text-paper/90"><strong className="text-paper">Tidak ada yang perlu diproduksi</strong> untuk tren ini. Waktu kamu lebih berharga di tempat lain.</p>
-            ) : (
-              <>
-                <p className="text-md">
-                  <span className="font-semibold">{executionFormatLabels[state.result.action.format]}</span>
-                  <span className="text-paper/80"> — {state.result.action.angle}</span>
-                </p>
-                {state.result.action.steps.length > 0 && (
-                  <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm text-paper/80 marker:font-mono marker:text-paper/50">
-                    {state.result.action.steps.map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ol>
-                )}
-              </>
-            )}
-          </div>
-
-          {state.result.decision !== 'skip' && state.result.copy && (
-            <div className="flex flex-col gap-2">
-              <p className={sectionLabel}>{archetype ? `Saran copy · tone ${archetype}` : 'Saran copy'}</p>
-              <dl className="flex flex-col gap-3 rounded-md border border-paper/20 p-3 md:p-4">
-                {(
-                  [
-                    ['Hook', state.result.copy.hook],
-                    ['Caption', state.result.copy.caption],
-                    ['CTA', state.result.copy.cta],
-                  ] as const
-                ).map(([label, text]) => (
-                  <div key={label} className="flex flex-col gap-0.5">
-                    <dt className={`${monoMeta} text-paper/50`}>{label}</dt>
-                    <dd className="text-md text-paper/90">{text}</dd>
+              <div className="flex flex-col gap-1.5">
+                <p className={sectionLabel}>Make it today</p>
+                {state.result.decision === 'skip' ? (
+                  <p className="text-md font-bold text-txt-white">
+                    Tidak ada yang perlu diproduksi untuk tren ini. Waktu kamu lebih berharga di tempat lain.
+                  </p>
+                ) : (
+                  <div className="flex flex-col text-md text-txt-white">
+                    <p className="font-bold">{executionFormatLabels[state.result.action.format]}</p>
+                    <p>{state.result.action.angle}</p>
+                    {state.result.action.steps.length > 0 && (
+                      <ol className="mt-1.5 list-decimal pl-[18px] text-xs text-disabled-surface">
+                        {state.result.action.steps.map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
+                    )}
                   </div>
-                ))}
-              </dl>
+                )}
+              </div>
+
+              {state.result.decision !== 'skip' && state.result.copy && (
+                <>
+                  <div className="h-px bg-disabled-content" />
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-md font-bold text-txt-white">
+                      Saran Copy{archetype && <span className="sr-only"> sesuai tone {archetype}</span>}
+                    </p>
+                    <dl className="flex flex-col gap-2.5 rounded-[4px] border border-disabled-content p-4">
+                      {(
+                        [
+                          ['Hook', state.result.copy.hook],
+                          ['Caption', state.result.copy.caption],
+                          ['CTA', state.result.copy.cta],
+                        ] as const
+                      ).map(([label, text]) => (
+                        <div key={label} className="flex flex-col">
+                          <dt className={sectionLabel}>{label}</dt>
+                          <dd className="text-sm text-txt-white">{text}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
 
-          <ContextAccordion news={state.news} youtube={state.youtube} />
-
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-2.5">
             <button type="button" onClick={() => copyBrief(state)} className={secondaryButton}>
-              {copied ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}
+              {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
               {copied ? 'Tersalin' : 'Salin Brief'}
             </button>
+            <button type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded} aria-controls={detailsId} className={secondaryButton}>
+              {expanded ? 'Tutup' : 'Buka'}
+              <CaretDown size={16} aria-hidden className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+            </button>
           </div>
-        </div>
+        </>
       )}
     </section>
   );
